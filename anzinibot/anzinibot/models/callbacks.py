@@ -8,6 +8,7 @@ class Callbacks:
     LOGIN = 'LOGIN'
     SWITCH = 'SWITCH'
     HELP = 'HELP'
+    DELETE_PINNED_MESSAGE = 'DELETE_PINNED_MESSAGE'
 
 
     # BUTTON CALLBACKS

@@ -1,3 +1,4 @@
+from anzinibot.models.pinnedmsg import PinnedMessage
 from functools import wraps
 from random import randrange
 import time
@@ -49,6 +50,7 @@ def update_message(obj: InteractSession, text:str):
         message_id (int, optional): If this argument is defined, then the method will try to edit the message matching the `message_id` of the `obj`. Defaults to None.
     """
     from anzinibot import telegram_bot as bot
+    # TODO pinned = PinnedMessage.deserialize(obj.user_id)
     message_id = config.get_message(obj.get_user_id())
     try:
         bot.delete_message(chat_id=obj.user_id, message_id=message_id)
@@ -117,14 +119,15 @@ def scrape_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]
 
 
 def enqueue_dm(session:InteractSession):
+
     update_message(session, 'Enqueuing DMs...')
-    result = interaction_job(session)
-    #queue.add_task(interaction_job, session)
+    #result = interaction_job(session)
+    queue.add_task(dm_job, session)
 
 
 @error_proof
-def interaction_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]]:
-
+def dm_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]]:
+    applogger.info(f'Starting Dm Job <{session.target}>')
     session.get_creds()
     # TODO: Scrape Users
     if not session.get_scraped():
@@ -167,5 +170,3 @@ def interaction_job(session:InteractSession) -> Tuple[bool, Optional[InteractSes
     update_message(session, follow_successful_text.format(len(session.get_messaged()), session.target))
     client.disconnect()
     return (True, session)
-
-        

@@ -4,9 +4,10 @@ import time
 
 class TaskQueue(queue.Queue):
 
-    def __init__(self, num_workers=1):
+    def __init__(self, num_workers=1, names:list=None):
         queue.Queue.__init__(self)
         self.num_workers = num_workers
+        self.names = names
         self.start_workers()
 
     def add_task(self, task, *args, **kwargs):
@@ -17,12 +18,13 @@ class TaskQueue(queue.Queue):
     def start_workers(self):
         for i in range(self.num_workers):
             t = Thread(target=self.worker)
+            if self.names and len(self.names) >= i+1:
+                t.setName(self.names[i])
             t.daemon = True
             t.start()
 
     def worker(self):
         while True:
-            tupl = self.get()
             item, args, kwargs = self.get()
             item(*args, **kwargs)  
             self.task_done()
