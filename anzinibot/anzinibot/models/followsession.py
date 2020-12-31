@@ -1,7 +1,7 @@
 from typing import Optional
-from ozanbot.models.interaction import Interaction
-from ozanbot.models.persistence import Persistence, persistence_decorator
-from ozanbot.models.instasession import InstaSession
+from anzinibot.models.interaction import Interaction
+from anzinibot.models.persistence import Persistence, persistence_decorator
+from anzinibot.models.instasession import InstaSession
 import time
 
 

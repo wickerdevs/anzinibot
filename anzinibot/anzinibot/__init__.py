@@ -1,12 +1,12 @@
-PERSISTENCE_DIR = 'ozanbot/config/'
-CONFIG_DIR = 'ozanbot/config/config.json'
-CONFIG_FOLDER = 'ozanbot/config/'
+PERSISTENCE_DIR = 'anzinibot/config/'
+CONFIG_DIR = 'anzinibot/config/config.json'
+CONFIG_FOLDER = 'anzinibot/config/'
 
 import os, logging
 from telegram.ext.updater import Updater
 from telegram.ext.defaults import Defaults
 from telegram.utils.request import Request
-from ozanbot.models.mq_bot import MQBot
+from anzinibot.models.mq_bot import MQBot
 import telegram
 from telegram import ParseMode
 from telegram.ext import messagequeue as mq
@@ -29,7 +29,7 @@ telelogger = logging.getLogger("telegram.bot")
 telelogger.setLevel(logging.INFO)
 
 def instaclient_error_callback(driver):
-    from ozanbot import telegram_bot as bot
+    from anzinibot import telegram_bot as bot
     driver.save_screenshot('error.png')
     bot.report_error('instaclient.__find_element() error.', send_screenshot=True, screenshot_name='error')
     os.remove('error.png')
@@ -42,7 +42,7 @@ if os.environ.get('PORT') not in (None, ""):
     LOCALHOST = False    
 
 # Initialize Bot
-from ozanbot.config import config
+from anzinibot.config import config
 BOT_TOKEN = config.get('BOT_TOKEN')
 URL = config.get('SERVER_APP_DOMAIN')
 PORT = int(os.environ.get('PORT', 5000))
@@ -56,7 +56,7 @@ updater = Updater(bot=telegram_bot, use_context=True)
 
 # SET UP BOT COMMAND HANDLERS
 applogger.debug(f'Initiate setup')
-from ozanbot.bot import setup
+from anzinibot.bot import setup
 setup.setup(updater)
 
         

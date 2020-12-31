@@ -1,16 +1,16 @@
 from logging import Filter
 
 from telegram import update
-from ozanbot import telelogger
-from ozanbot.bot.commands.login import *
-from ozanbot.bot.commands.help import *
-from ozanbot.bot.commands.logout import *
-from ozanbot.bot.commands.interact import *
-from ozanbot.bot.commands.account import *
-from ozanbot.bot.commands.start import *
-from ozanbot.bot.commands.incorrect import *
-from ozanbot.bot.commands.settings import * 
-from ozanbot.models.callbacks import *
+from anzinibot import telelogger
+from anzinibot.bot.commands.login import *
+from anzinibot.bot.commands.help import *
+from anzinibot.bot.commands.logout import *
+from anzinibot.bot.commands.interact import *
+from anzinibot.bot.commands.account import *
+from anzinibot.bot.commands.start import *
+from anzinibot.bot.commands.incorrect import *
+from anzinibot.bot.commands.settings import * 
+from anzinibot.models.callbacks import *
 
 
 def setup(updater):

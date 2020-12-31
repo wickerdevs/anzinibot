@@ -1,6 +1,6 @@
 from telegram import message
-from ozanbot.models.settings import Settings
-from ozanbot.bot.commands import *
+from anzinibot.models.settings import Settings
+from anzinibot.bot.commands import *
 
 @send_typing_action
 def settings_def(update:Update, context):

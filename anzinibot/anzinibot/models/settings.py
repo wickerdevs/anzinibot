@@ -1,11 +1,11 @@
 from datetime import timedelta
-from ozanbot.models import interaction
-from ozanbot.models.interaction import Interaction
+from anzinibot.models import interaction
+from anzinibot.models.interaction import Interaction
 from typing import Dict, List, TYPE_CHECKING
-from ozanbot.models.setting import Setting
+from anzinibot.models.setting import Setting
 import jsonpickle, json
-from ozanbot.models.persistence import Persistence, persistence_decorator
-from ozanbot.config import config
+from anzinibot.models.persistence import Persistence, persistence_decorator
+from anzinibot.config import config
 import datetime
     
 

@@ -1,4 +1,4 @@
-from ozanbot import applogger, telelogger, telegram_bot, updater
+from anzinibot import applogger, telelogger, telegram_bot, updater
 
 
 

@@ -1,6 +1,6 @@
-from ozanbot.models.callbacks import Callbacks
-from ozanbot.bot.commands import *
-from ozanbot import *
+from anzinibot.models.callbacks import Callbacks
+from anzinibot.bot.commands import *
+from anzinibot import *
 
 class CreateMarkup():
     """

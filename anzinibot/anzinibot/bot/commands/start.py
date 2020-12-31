@@ -1,4 +1,4 @@
-from ozanbot.bot.commands import *
+from anzinibot.bot.commands import *
 
 @send_typing_action
 def start_def(update, context):

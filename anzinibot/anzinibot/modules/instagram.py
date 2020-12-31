@@ -2,21 +2,21 @@ from functools import wraps
 import logging
 
 from telegram.parsemode import ParseMode
-from ozanbot.models.interaction import Interaction
+from anzinibot.models.interaction import Interaction
 from sys import exc_info
-from ozanbot.models.settings import Settings
-from ozanbot.models.setting import Setting
-from ozanbot.models.followsession import FollowSession
-from ozanbot.config import config
-from ozanbot.texts import *
+from anzinibot.models.settings import Settings
+from anzinibot.models.setting import Setting
+from anzinibot.models.followsession import FollowSession
+from anzinibot.config import config
+from anzinibot.texts import *
 from typing import List, Optional, Tuple
-from ozanbot import CONFIG_DIR, CONFIG_FOLDER
+from anzinibot import CONFIG_DIR, CONFIG_FOLDER
 from instaclient.client.instaclient import InstaClient
 from instaclient.errors.common import FollowRequestSentError, InvaildPasswordError, InvalidUserError, PrivateAccountError, SuspisciousLoginAttemptError, VerificationCodeNecessary
 from instaclient.instagram.post import Post
 from instaclient.instagram.profile import Profile
-from ozanbot.models.instasession import InstaSession
-from ozanbot import applogger
+from anzinibot.models.instasession import InstaSession
+from anzinibot import applogger
 import os, multiprocessing
 
 instalogger = logging.getLogger('instaclient')
@@ -24,7 +24,7 @@ instalogger = logging.getLogger('instaclient')
 
 def insta_error_callback(driver):
     driver.save_screenshot('error.png')
-    from ozanbot import telegram_bot as bot, config # TODO
+    from anzinibot import telegram_bot as bot, config # TODO
     users_str = config.get('DEVS')
     if isinstance(users_str, str):
         users_str = users_str.replace('[', '')
@@ -49,7 +49,7 @@ def update_message(obj: FollowSession, text:str):
         message (str): The text to send via message
         message_id (int, optional): If this argument is defined, then the method will try to edit the message matching the `message_id` of the `obj`. Defaults to None.
     """
-    from ozanbot import telegram_bot as bot
+    from anzinibot import telegram_bot as bot
     message_id = config.get_message(obj.get_user_id())
     try:
         bot.delete_message(chat_id=obj.user_id, message_id=message_id)

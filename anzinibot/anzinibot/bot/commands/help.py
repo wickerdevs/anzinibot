@@ -1,4 +1,4 @@
-from ozanbot.bot.commands import *
+from anzinibot.bot.commands import *
 
 
 def help_def(update, context):

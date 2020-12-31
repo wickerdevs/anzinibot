@@ -1,8 +1,8 @@
 from instaclient.errors.common import InstaClientError, InvaildPasswordError, InvalidSecurityCodeError, InvalidUserError, NotLoggedInError, PrivateAccountError, InvalidVerificationCodeError, VerificationCodeNecessary, SuspisciousLoginAttemptError
 from instaclient.client.instaclient import InstaClient
 from instaclient.instagram.profile import Profile
-from ozanbot.bot.commands import *
-from ozanbot import applogger
+from anzinibot.bot.commands import *
+from anzinibot import applogger
 
 client:InstaClient
 
