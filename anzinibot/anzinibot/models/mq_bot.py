@@ -1,4 +1,4 @@
-from anzinibot.config import config
+from anzinibot.modules import config
 import telegram.bot
 from anzinibot import *
 from telegram.ext import messagequeue as mq 

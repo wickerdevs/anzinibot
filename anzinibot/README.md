@@ -1,2 +1,2 @@
-# template
- Template repository for Wicker Devs telegram bots.
+# anzinibot
+ anzinibot repository for Wicker Devs telegram bots.

@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 from functools import wraps
 from telegram.utils.helpers import mention_html
 import sys, traceback, json, logging, os, html, pickle
-from anzinibot.config import config
-from anzinibot import applogger, telelogger, instalogger
+from anzinibot.modules import config
+
+telelogger = logging.getLogger('telegram.bot')
 
 # GLOBAL VARIABLES - CONVERSATION
 TIMEOUT = -2

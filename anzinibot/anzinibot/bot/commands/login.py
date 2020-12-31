@@ -122,13 +122,19 @@ def instagram_password(update, context):
     settings.set_setting(instasession.username)
     settings.set_message(config.get_message(update.effective_chat.id))
 
-    # Ask to input default message
+    """ # Ask to input default message
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
     send_message(update, context, login_successful_text, markup)
-    return StartStates.TEXT
+    return StartStates.TEXT """
+    settings.save()
+    settings.discard()
+    instasession.discard()
+    markup = CreateMarkup({Callbacks.HELP: 'What can I do?'}).create_markup()
+    send_message(update, context, end.format(instasession.username), markup)
+    return ConversationHandler.END
 
 
-@send_typing_action
+""" @send_typing_action
 def input_default_text(update, context):
     settings:Settings = Settings.deserialize(Persistence.SETTINGS, update)
     if not settings:
@@ -148,7 +154,7 @@ def input_default_text(update, context):
 
     settings.discard()
     instasession.discard()
-    return ConversationHandler.END
+    return ConversationHandler.END """
 
 
 @send_typing_action

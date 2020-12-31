@@ -20,6 +20,7 @@ class Persistence(object):
     INSTASESSION = 'instasession'
     START = 'start'
     SETTINGS = 'settings'
+    INTERACT = 'interact'
     
     
     def __init__(self, method, user_id, message_id=None):

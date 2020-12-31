@@ -79,7 +79,7 @@ def select_text(update, context):
 @send_typing_action
 def cancel_settings(update, context, settings:Settings=None):
     if not settings:
-        settings = FollowSession.deserialize(Persistence.FOLLOW, update)
+        settings = InteractSession.deserialize(Persistence.FOLLOW, update)
         if not settings:
             return
 

@@ -11,6 +11,7 @@ class Callbacks:
 
 
     # BUTTON CALLBACKS
+    SKIP = 'SKIP'
     SELECTSWITCH = 'SELECTSWITCH'
     CANCEL = 'CANCEL'
     NONE = 'NONE'
@@ -37,18 +38,21 @@ class InstaStates:
     INPUT_SECURITY_CODE = 4
 
 
-class FollowStates:
+class ScrapeStates:
     """Object to store PTB Follow Conversation Handler states indicators"""
     ACCOUNT = 1
     COUNT = 2
-    INPUT_COMMENT_BOOL = 3
-    CONFIRM = 4
+    CONFIRM = 3
 
 
-class UnfollowStates:
-    """Object to store PTB UnFollow Conversation Handler states indicators"""
-    RECORD = 1
-    CONFIRM = 2
+class InteractStates:
+    SCRAPE = 1
+    SCRAPEACCOUNT = 2
+    COUNT = 3
+    INPUTACCOUNTS = 7
+    INPUTPROXIES = 8
+    MESSAGE = 4
+    CONFIRM = 5
 
 
 class SettingsStates:

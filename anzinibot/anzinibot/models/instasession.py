@@ -1,5 +1,5 @@
 from anzinibot.models.persistence import persistence_decorator
-from anzinibot.config import config
+from anzinibot.modules import config
 from anzinibot.bot.commands import *
 from anzinibot import *
 import os

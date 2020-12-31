@@ -5,7 +5,7 @@ from typing import Dict, List, TYPE_CHECKING
 from anzinibot.models.setting import Setting
 import jsonpickle, json
 from anzinibot.models.persistence import Persistence, persistence_decorator
-from anzinibot.config import config
+from anzinibot.modules import config
 import datetime
     
 

@@ -9,7 +9,7 @@ invalid_credentials_text = 'Your instagram credentials are incorrect... Please l
 verification_code_necessary = 'Your instagram account has 2FA turned on... In order for the bot to work, please turn it off.'
 private_account_error_text = 'The account {} is private - hence it\'s impossible to get it\'s followers. Please try again with another account using /follow'
 operation_error_text = 'There was an error when executing your request... The developer has been informed. The bot has interacted with {} users.'
-follow_successful_text = 'Operation successful! The bot has interacted with {} of {}\'s followers!'
+follow_successful_text = 'Operation successful! The bot has interacteed with {} of {}\'s!'
 
 
 # START COMMAND
@@ -55,14 +55,24 @@ instagram_loggedout_text = 'Instagram log out successful! To log in again, use /
 error_loggingout_text = 'There was an error when trying to log out of instagram... Try again later or contact a developer.'
 
 
-# FOLLOW CONVERSATION
+# SEND DM CONVERSATION
+select_scrape_text = 'Select below the selection of users to send your DM to:'
+incorrect_user_text = 'The username <b>{}</b> is invalid. Please try again with another instagram username:'
+input_message_text = 'Input below the message you would like me to send. (Try avoiding emojis or special characters as they might not get recognized by instagram)'
+input_accounts_text = 'Send below a text file containing a list of credentials of the accounts the bot should use for this operation:'
+input_proxies_text = 'Send below a text file containing a list of proxies the bot should use for this operation:'
+# Instagram
+inform_messages_status_text = 'Sending messages to {} users... {} sent so far...'
+
+
+# SCRAPE CONVERSATION
 select_account_text = 'Insert below the username of the account you want to scrape:'
 error_when_checking_account = 'There was an error when checking {}\'s vadility... The account might be inexistent or private. Please choose another account:'
-select_count_text = 'Select below the amount of users you would like to follow:'
-select_comment_bool_text = 'Should the bot also add comments to one post of every scraped follower?'
-confirm_follow_text = 'Are you sure you want to interact with {} of {}\'s followers?'
+select_count_text = 'Select below the amount of users you would like to send your message to:'
+confirm_dms_text = 'Are you sure you want to send your message to {} users?'
 launching_operation_text = 'Starting operation...'
-follow_cancelled_text  = 'Follow request cancelled.'
+scrape_followers_callback_text = 'Scraped {} followers...'
+follow_cancelled_text  = 'The request cancelled.'
 
 
 # SETTINGS CONVERSATION
@@ -87,4 +97,4 @@ not_logged_in_text = 'To use this command you must log in first with /login'
 no_settings_found_text = 'No settings where found... Please use /start to set up the bot first.'
 
 # HELP COMMAND
-help_text = '<b>FF INSTA BOT</b>\n/settings - Manage bot settings\n\n/account - Check instagram connection(s)\n\n/login - Log into another instagram account\n\n/logout - Log out of current instagram\n\n/interact - Interact with a user\'s followers\n\n/start - Run Bot Setup'
+help_text = '<b>FF INSTA BOT</b>\n/account - Check instagram connection(s)\n\n/login - Log into another instagram account\n\n/logout - Log out of current instagram\n\n/dm - Send DMs\n\n/start - Run Bot Setup'

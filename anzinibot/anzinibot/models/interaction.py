@@ -9,27 +9,24 @@ class Interaction:
     target:Union['Profile', str],
     scraped:List[str]=None,
     failed:List[str]=None,
-    followed:List['Profile']=None,
-    liked:List['Post']=None,
-    commented:List['Post']=None) -> None:
+    messaged:List[str]=None) -> None:
         self.target = target
         self.scraped = scraped
+        self.messaged = messaged
         self.failed = failed
-        self.followed = followed
-        self.liked = liked
-        self.commented = commented
+        
 
     def __eq__(self, o: object) -> bool:
         if isinstance(o, Interaction):
             if self.target == o.target:
-                for item in o.followed:
-                    if item not in self.followed:
+                for item in o.scraped:
+                    if item not in self.scraped:
                         return False
-                for item in o.liked:
-                    if item not in self.liked:
+                for item in o.messaged:
+                    if item not in self.messaged:
                         return False
-                for item in o.commented:
-                    if item not in self.liked:
+                for item in o.failed:
+                    if item not in self.failed:
                         return False
                 return True
         return False
@@ -62,11 +59,6 @@ class Interaction:
         for key in data:
             if hasattr(data[key], 'de_json'):
                 data[key] = Profile.de_json(data[key], client)
-            if isinstance(data[key], List[Dict]):
-                if key == 'followed':
-                    data[key] = Profile.de_json(data[key], client)
-                elif key in ('liked', 'commented'):
-                    data[key] = Post.de_json(data[key], client)
 
         obj = cls(**data)  # type: ignore[call-arg]
         return obj

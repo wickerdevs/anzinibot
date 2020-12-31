@@ -5,11 +5,10 @@ from anzinibot import telelogger
 from anzinibot.bot.commands.login import *
 from anzinibot.bot.commands.help import *
 from anzinibot.bot.commands.logout import *
-from anzinibot.bot.commands.interact import *
 from anzinibot.bot.commands.account import *
 from anzinibot.bot.commands.start import *
+from anzinibot.bot.commands.senddm import *
 from anzinibot.bot.commands.incorrect import *
-from anzinibot.bot.commands.settings import * 
 from anzinibot.models.callbacks import *
 
 
@@ -23,33 +22,26 @@ def setup(updater):
             InstaStates.INPUT_USERNAME: [MessageHandler(Filters.text, instagram_username, run_async=True)],
             InstaStates.INPUT_PASSWORD: [MessageHandler(Filters.text, instagram_password, run_async=True)],
             InstaStates.INPUT_SECURITY_CODE: [MessageHandler(Filters.text, instagram_security_code, run_async=True)],
-            StartStates.TEXT: [MessageHandler(Filters.text, input_default_text)]
         },
         fallbacks=[CallbackQueryHandler(cancel_instagram, pattern=Callbacks.CANCEL, run_async=True), CallbackQueryHandler(instagram_resend_scode, pattern=Callbacks.RESEND_CODE, run_async=True)]
     )
 
 
-    interaction_handler = ConversationHandler(
-        entry_points=[CommandHandler('interact', follow_def, run_async=True)], 
+    # TODO implement senddm handler
+    dm_handler = ConversationHandler(
+        entry_points=[CommandHandler('dm', senddm_def)],
         states={
-            FollowStates.ACCOUNT: [MessageHandler(Filters.text, input_follow_account, run_async=True)],
-            FollowStates.COUNT: [CallbackQueryHandler(input_follow_count, run_async=True)],
-            FollowStates.INPUT_COMMENT_BOOL: [CallbackQueryHandler(input_comment_bool, run_async=True)],
-            FollowStates.CONFIRM : [CallbackQueryHandler(confirm_follow, pattern=Callbacks.CONFIRM, run_async=True)]
+            InteractStates.SCRAPE: [CallbackQueryHandler(select_scrape)],
+            InteractStates.SCRAPEACCOUNT: [MessageHandler(Filters.text, select_scrape_account)],
+            InteractStates.COUNT: [CallbackQueryHandler(select_count)],
+            InteractStates.MESSAGE: [MessageHandler(Filters.text, input_message)],
+            InteractStates.INPUTACCOUNTS: [MessageHandler(Filters.document, input_accounts)],
+            InteractStates.INPUTPROXIES: [MessageHandler(Filters.document, input_proxies)],
+            InteractStates.CONFIRM: [CallbackQueryHandler(confirm_dms)],
         },
-        fallbacks=[CallbackQueryHandler(cancel_follow, pattern=Callbacks.CANCEL, run_async=True)]
+        fallbacks=[CallbackQueryHandler(cancel_send_dm, pattern=Callbacks.CANCEL), CallbackQueryHandler(skip, pattern=Callbacks.SKIP)]
     )
 
-
-    # TODO implement missing methods here
-    settings_handler = ConversationHandler(
-        entry_points=[CommandHandler('settings', settings_def, run_async=True), CallbackQueryHandler(settings_def, pattern=Callbacks.EDIT_SETTINGS, run_async=True)],
-        states={
-            SettingsStates.SELECT: [CallbackQueryHandler(select_setting, run_async=True)],
-            SettingsStates.COMMENT: [MessageHandler(Filters.text, select_text, run_async=True)],
-        },
-        fallbacks=[CallbackQueryHandler(cancel_settings, pattern=SettingsStates.CANCEL, run_async=True)]
-    )
 
     # Commands
     dp.add_handler(CommandHandler('start', start_def))
@@ -66,8 +58,7 @@ def setup(updater):
 
     
     dp.add_handler(instagram_handler)
-    dp.add_handler(interaction_handler)
-    dp.add_handler(settings_handler)
+    dp.add_handler(dm_handler)
     dp.add_handler(MessageHandler(Filters.text, incorrect_command))
     dp.add_handler(MessageHandler(Filters.command, incorrect_command))
 

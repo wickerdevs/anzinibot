@@ -4,6 +4,7 @@ from anzinibot import CONFIG_DIR
 from typing import Optional, Set, TYPE_CHECKING
 if TYPE_CHECKING:
     from anzinibot.models.settings import Settings
+    from anzinibot.models.interaction import Interaction
 
 
 
@@ -35,7 +36,6 @@ def set_settings(data:'Settings'):
     set(f'SETTINGS:{data.get("user_id")}', data)
 
 
-
 def get_settings(user_id:int) -> Optional['Settings']:
     """
     Return `Setting` object corresponding to the user id.
@@ -53,6 +53,30 @@ def get_settings(user_id:int) -> Optional['Settings']:
     return None
 
 
+def set_scraped(data:'Interaction'):
+    scraped = get('SCRAPED')
+    if not scraped:
+        scraped = dict()
+    
+    old = scraped.get(data.target)
+    if old:
+        for user in data.scraped:
+            if user not in old:
+                old.append(user)
+        scraped[data.target] = old
+    else:
+        scraped[data.target] = data.scraped
+    set('SCRAPED', scraped)
+
+
+def get_scraped(target:str):
+    data = get('SCRAPED')
+    if not data:
+        return None
+
+    return data.get(target)
+    
+        
 def get(key="", parent="", default="", value=""):
     """
     Retrieve configuration variables from the config.json file.

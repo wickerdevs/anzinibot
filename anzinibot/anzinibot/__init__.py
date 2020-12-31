@@ -1,6 +1,7 @@
-PERSISTENCE_DIR = 'anzinibot/config/'
-CONFIG_DIR = 'anzinibot/config/config.json'
-CONFIG_FOLDER = 'anzinibot/config/'
+PERSISTENCE_DIR = 'config/'
+CONFIG_DIR = 'config/config.json'
+CONFIG_FOLDER = 'config/'
+LOCALHEADLESS = False
 
 import os, logging
 from telegram.ext.updater import Updater
@@ -36,18 +37,20 @@ def instaclient_error_callback(driver):
 
 
 LOCALHOST = True
-queue = None
 if os.environ.get('PORT') not in (None, ""):
     # Code running locally
     LOCALHOST = False    
 
+from anzinibot.models.worker import TaskQueue
+queue = TaskQueue(num_workers=6)
+
 # Initialize Bot
-from anzinibot.config import config
+from anzinibot.modules import config
 BOT_TOKEN = config.get('BOT_TOKEN')
 URL = config.get('SERVER_APP_DOMAIN')
 PORT = int(os.environ.get('PORT', 5000))
 
-
+# set connection pool size for bot 
 request = Request(con_pool_size=8)
 defaults = Defaults(parse_mode=ParseMode.HTML, run_async=True)
 q = mq.MessageQueue(all_burst_limit=3, all_time_limit_ms=3000)
@@ -58,5 +61,6 @@ updater = Updater(bot=telegram_bot, use_context=True)
 applogger.debug(f'Initiate setup')
 from anzinibot.bot import setup
 setup.setup(updater)
+
 
         
