@@ -199,6 +199,8 @@ def confirm_dms(update, context):
     data = update.callback_query.data
     update.callback_query.answer()
     if data == Callbacks.CONFIRM:
+        markup = CreateMarkup({Callbacks.HELP: 'Command List'}).create_markup()
+        send_message(update, context, enqueued_dms_text, markup)
         instagram.enqueue_dm(session)
         session.discard()
         return ConversationHandler.END

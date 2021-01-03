@@ -17,7 +17,8 @@ from telegram.ext import messagequeue as mq
 debug = True
 if debug:
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-else:
+
+if not debug:
     logging.basicConfig(filename="logs.log", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 applogger = logging.getLogger('applogger')
@@ -42,7 +43,7 @@ if os.environ.get('PORT') not in (None, ""):
     LOCALHOST = False    
 
 from anzinibot.models.worker import TaskQueue
-queue = TaskQueue(num_workers=2, names=['dms', 'others'])
+queue = TaskQueue(num_workers=3, names=['dms', 'tags'])
 
 # Initialize Bot
 from anzinibot.modules import config

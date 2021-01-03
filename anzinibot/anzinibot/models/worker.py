@@ -17,9 +17,10 @@ class TaskQueue(queue.Queue):
 
     def start_workers(self):
         for i in range(self.num_workers):
-            t = Thread(target=self.worker)
             if self.names and len(self.names) >= i+1:
-                t.setName(self.names[i])
+                t = Thread(target=self.worker, name=self.names[i])
+            else:
+                t = Thread(target=self.worker)
             t.daemon = True
             t.start()
 

@@ -61,6 +61,7 @@ incorrect_user_text = 'The username <b>{}</b> is invalid. Please try again with 
 input_message_text = 'Input below the message you would like me to send. (Try avoiding emojis or special characters as they might not get recognized by instagram)'
 input_accounts_text = 'Send below a text file containing a list of credentials of the accounts the bot should use for this operation:'
 input_proxies_text = 'Send below a text file containing a list of proxies the bot should use for this operation:'
+enqueued_dms_text = 'DMs task enqueued successfully.'
 # Instagram
 inform_messages_status_text = 'Sending messages to {} users... {} sent so far...'
 

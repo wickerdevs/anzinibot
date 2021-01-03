@@ -2,6 +2,7 @@ from anzinibot.modules import config
 from anzinibot.bot import *
 from anzinibot.texts import *
 from anzinibot.models.callbacks import *
+from anzinibot.models.pinnedmsg import PinnedMessage
 from anzinibot.models.persistence import Persistence
 from anzinibot.models.instasession import InstaSession
 from anzinibot.models.interactsession import InteractSession

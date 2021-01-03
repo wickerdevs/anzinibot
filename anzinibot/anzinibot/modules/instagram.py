@@ -1,7 +1,6 @@
 from anzinibot.models.pinnedmsg import PinnedMessage
 from functools import wraps
 from random import randrange
-import time
 from telegram import update
 from telegram.parsemode import ParseMode
 from anzinibot.models.interaction import Interaction
@@ -17,7 +16,7 @@ from instaclient.errors.common import FollowRequestSentError, InvaildPasswordErr
 from instaclient.instagram.post import Post
 from anzinibot.models.instasession import InstaSession
 from anzinibot import applogger, queue, LOCALHEADLESS
-import os, multiprocessing, logging
+import os, multiprocessing, logging, time, threading
 
 instalogger = logging.getLogger('instaclient')
 
@@ -40,36 +39,50 @@ def insta_error_callback(driver):
         bot.send_photo(chat_id=dev, photo=open('{}.png'.format('error'), 'rb'), caption='There was an error with the bot. Check logs')
 
     
-def update_message(obj: InteractSession, text:str):
+def update_message(obj: InteractSession, text:str, final:bool=False):
     """
     process_update_callback sends an update message to the user, to inform of the status of the current process. This method can be used as a callback in another method.
 
     Args:
-        obj (ScraperorForwarder): Object to get the `chat_id` and `message_id` from.
-        message (str): The text to send via message
-        message_id (int, optional): If this argument is defined, then the method will try to edit the message matching the `message_id` of the `obj`. Defaults to None.
+        obj (InteractionSession): Object to get the `chat_id` and `message_id` from.
+        text (str): The text to send via message
     """
     from anzinibot import telegram_bot as bot
-    # TODO pinned = PinnedMessage.deserialize(obj.user_id)
-    message_id = config.get_message(obj.get_user_id())
-    try:
-        bot.delete_message(chat_id=obj.user_id, message_id=message_id)
-    except Exception as error:
-        applogger.error(f'Unable to delete message of id {message_id}', exc_info=error)
-        pass         
+    pinned:PinnedMessage = PinnedMessage.deserialize(bot, obj.user_id, obj.username, threading.current_thread().getName())
+    if pinned:
+        if not final:
+            pinned.update(text)
+        else:
+            pinned.final_update(text)
+        obj.set_message(pinned.message_id)
+        return pinned
+    else:
+        message_id = config.get_message(obj.get_user_id())
+        try:
+            bot.delete_message(chat_id=obj.user_id, message_id=message_id)
+        except Exception as error:
+            applogger.error(f'Unable to delete message of id {message_id}')
+            pass         
 
-    message_obj = bot.send_message(chat_id=obj.user_id, text=text, parse_mode=ParseMode.HTML)
-    obj.set_message(message_obj.message_id)
-    config.set_message(obj.user_id, message_obj.message_id)
-    applogger.debug(f'Sent message of id {message_obj.message_id}')
-    return   
+        pinned = PinnedMessage.send(
+            bot=bot,
+            thread_name=threading.current_thread().getName(),
+            user_id=obj.user_id,
+            account=obj.username,
+            message_id=obj.message_id,
+            text=text
+        )
+
+        obj.set_message(pinned.message_id)
+        applogger.debug(f'Sent pinned message of id {pinned.message_id}')
+    return pinned
 
 
 def init_client():
     if os.environ.get('PORT') in (None, ""):
-        client = InstaClient(driver_path=f'{CONFIG_FOLDER}chromedriver.exe', debug=True, error_callback=insta_error_callback, logger=instalogger, localhost_headless=True)
+        client = InstaClient(driver_path=f'{CONFIG_FOLDER}chromedriver.exe', debug=True, logger=instalogger, localhost_headless=True)
     else:
-        client = InstaClient(host_type=InstaClient.WEB_SERVER, debug=True, error_callback=insta_error_callback, logger=instalogger, localhost_headless=LOCALHEADLESS)
+        client = InstaClient(host_type=InstaClient.WEB_SERVER, debug=True, logger=instalogger, localhost_headless=LOCALHEADLESS)
     return client
 
 
@@ -119,8 +132,6 @@ def scrape_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]
 
 
 def enqueue_dm(session:InteractSession):
-
-    update_message(session, 'Enqueuing DMs...')
     #result = interaction_job(session)
     queue.add_task(dm_job, session)
 
@@ -138,8 +149,6 @@ def dm_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]]:
             return (False, session)
     else:
         followers = session.get_scraped()
-
-
 
     client = init_client()
     update_message(session, logging_in_text)
@@ -167,6 +176,6 @@ def dm_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]]:
         except Exception as error:
             applogger.error(f'Error in sending message to <{follower}>', exc_info=error)
 
-    update_message(session, follow_successful_text.format(len(session.get_messaged()), session.target))
+    update_message(session, follow_successful_text.format(len(session.get_messaged()), session.target), final=True)
     client.disconnect()
     return (True, session)

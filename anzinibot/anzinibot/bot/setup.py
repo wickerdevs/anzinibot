@@ -8,6 +8,7 @@ from anzinibot.bot.commands.logout import *
 from anzinibot.bot.commands.account import *
 from anzinibot.bot.commands.start import *
 from anzinibot.bot.commands.senddm import *
+from anzinibot.bot.commands.delpinnedmsg import *
 from anzinibot.bot.commands.incorrect import *
 from anzinibot.models.callbacks import *
 
@@ -59,6 +60,11 @@ def setup(updater):
     
     dp.add_handler(instagram_handler)
     dp.add_handler(dm_handler)
+
+    # OTHERS
+    dp.add_handler(CallbackQueryHandler(delpinnedmsg_def, pattern=Callbacks.DELETE_PINNED_MESSAGE))
+
+    # FALLBACK
     dp.add_handler(MessageHandler(Filters.text, incorrect_command))
     dp.add_handler(MessageHandler(Filters.command, incorrect_command))
 
