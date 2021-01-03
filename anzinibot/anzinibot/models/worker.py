@@ -1,6 +1,8 @@
+from anzinibot import applogger
 from threading import Thread
 import queue
 import time
+from typing import List
 
 class TaskQueue(queue.Queue):
 
@@ -8,6 +10,8 @@ class TaskQueue(queue.Queue):
         queue.Queue.__init__(self)
         self.num_workers = num_workers
         self.names = names
+        self.workers:List[Thread] = list()
+        self.stopping: bool = False
         self.start_workers()
 
     def add_task(self, task, *args, **kwargs):
@@ -23,9 +27,17 @@ class TaskQueue(queue.Queue):
                 t = Thread(target=self.worker)
             t.daemon = True
             t.start()
+            self.workers.append(t)
 
     def worker(self):
         while True:
+            if self.stopping:
+                break
             item, args, kwargs = self.get()
             item(*args, **kwargs)  
             self.task_done()
+
+    def close(self):
+        self.stopping = True
+        self.join()
+        applogger.info(f'Closed queue')

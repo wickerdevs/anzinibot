@@ -3,6 +3,7 @@ config.json
 persistence
 client_secret.json
 *.json
+*.txt
 
 # Scripts
 scripts

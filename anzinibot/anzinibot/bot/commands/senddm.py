@@ -1,3 +1,4 @@
+from instaclient.errors.common import PrivateAccountError
 from anzinibot.models.interaction import Interaction
 from anzinibot.bot.commands import *
 
@@ -28,7 +29,7 @@ def senddm_def(update, context):
 
     markupk[InteractStates.SCRAPEACCOUNT] = 'Scrape another user'
     markupk[Callbacks.CANCEL] = 'Cancel'
-    markup = CreateMarkup(markupk).create_markup()
+    markup = CreateMarkup(markupk, cols=2).create_markup()
 
     # Send message and update ConversationHandler
     message = send_message(update, context, select_scrape_text, markup)
@@ -51,17 +52,19 @@ def select_scrape(update, context):
     elif data == Callbacks.CANCEL:
         return cancel_send_dm(update, context)
 
+
     session.set_target(data)
     session.set_interaction(Interaction(data))
-    session.set_scraped(config.get_scraped(data))
+    scraped = config.get_scraped(data)
+    session.set_scraped(scraped)
 
-    counts = [5, 25, 50, 100, 250, 400, 500]
+    counts = [5, 25, 50, 100, 250, 400, 500, len(scraped)]
     markupk = dict()
     for count in counts:
-        if len(session.get_scraped()) >= count:
+        if len(scraped) >= count:
             markupk[count] = str(count)
     markupk[Callbacks.CANCEL] = 'Cancel'
-    markup = CreateMarkup(markupk).create_markup()
+    markup = CreateMarkup(markupk, cols=2).create_markup()
     send_message(update, context, select_count_text, markup)
     return InteractStates.COUNT
 
@@ -77,7 +80,9 @@ def select_scrape_account(update, context):
     send_message(update, context, checking_user_vadility_text)
     client = instagram.init_client()
     try:
-        result = client.is_valid_user(username)
+        profile = client.get_profile(username)
+        if profile.is_private:
+            raise PrivateAccountError(profile.username)
         client.disconnect()
     except:
         client.disconnect()
@@ -95,8 +100,9 @@ def select_scrape_account(update, context):
         250: '250',
         400: '400',
         500: '500',
+        profile.follower_count: f'All ({profile.follower_count})',
         Callbacks.CANCEL: 'Cancel'
-    }).create_markup()
+    }, cols=2).create_markup()
     send_message(update, context, select_count_text, markup)
     return InteractStates.COUNT
 
@@ -113,6 +119,12 @@ def select_count(update, context):
         return cancel_send_dm(update, context, session)
 
     session.set_count(int(data))
+    scraped = list()
+    for index, user in enumerate(session.get_scraped()):
+        if index+1 > session.count:
+            break
+        scraped.append(user)
+    session.set_scraped(scraped)
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
     send_message(update, context, input_message_text, markup)
     return InteractStates.MESSAGE
@@ -160,7 +172,7 @@ def input_accounts(update:Update, context:CallbackContext):
         context.bot.get_file(update.message.document).download(out=f)
 
     with open('config/accounts.txt', 'r') as file:
-        data = file.read().replace('\n', '')
+        data = file.read().splitlines()
         accounts = dict()
         for cred in data:
             cred = cred.split(':')
@@ -201,7 +213,7 @@ def confirm_dms(update, context):
     if data == Callbacks.CONFIRM:
         markup = CreateMarkup({Callbacks.HELP: 'Command List'}).create_markup()
         send_message(update, context, enqueued_dms_text, markup)
-        instagram.enqueue_dm(session)
+        instagram.enqueue_dm_process(session)
         session.discard()
         return ConversationHandler.END
     else:

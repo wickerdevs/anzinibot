@@ -2,6 +2,7 @@ from logging import Filter
 
 from telegram import update
 from anzinibot import telelogger
+from anzinibot.bot.commands.cancel import *
 from anzinibot.bot.commands.login import *
 from anzinibot.bot.commands.help import *
 from anzinibot.bot.commands.logout import *
@@ -9,6 +10,7 @@ from anzinibot.bot.commands.account import *
 from anzinibot.bot.commands.start import *
 from anzinibot.bot.commands.senddm import *
 from anzinibot.bot.commands.delpinnedmsg import *
+from anzinibot.bot.commands.clearscraped import *
 from anzinibot.bot.commands.incorrect import *
 from anzinibot.models.callbacks import *
 
@@ -47,16 +49,21 @@ def setup(updater):
     # Commands
     dp.add_handler(CommandHandler('start', start_def))
     dp.add_handler(CommandHandler("help", help_def, run_async=True))
+    dp.add_handler(CommandHandler('cancel', cancel_def))
     # Check / Switch account 
     dp.add_handler(CommandHandler('account', check_account,  run_async=True))
     dp.add_handler(CallbackQueryHandler(check_account, pattern=Callbacks.ACCOUNT))
     dp.add_handler(CallbackQueryHandler(switch_account, pattern=Callbacks.SWITCH))
     dp.add_handler(CallbackQueryHandler(select_switched_account, pattern=Callbacks.SELECTSWITCH))
     dp.add_handler(CallbackQueryHandler(help_def, pattern=Callbacks.HELP))
+
     # Log Out
     dp.add_handler(CommandHandler('logout', instagram_log_out, run_async=True))
     dp.add_handler(CallbackQueryHandler(instagram_log_out, pattern=Callbacks.LOGOUT, run_async=True))
 
+    # Clear Scraped Data
+    dp.add_handler(CallbackQueryHandler(clear_scraped_def, pattern=Callbacks.SCRAPED_DATA))
+    dp.add_handler(CallbackQueryHandler(confirm_clear_data, pattern=Callbacks.DELETE_SCRAPED_DATA))
     
     dp.add_handler(instagram_handler)
     dp.add_handler(dm_handler)

@@ -9,6 +9,7 @@ class Callbacks:
     SWITCH = 'SWITCH'
     HELP = 'HELP'
     DELETE_PINNED_MESSAGE = 'DELETE_PINNED_MESSAGE'
+    SCRAPED_DATA = 'SCRAPED_DATA'
 
 
     # BUTTON CALLBACKS
@@ -28,6 +29,7 @@ class Callbacks:
     FIFTY = '50'
     SFIVE = '75'
     RESEND_CODE = 'RESEND_CODE'
+    DELETE_SCRAPED_DATA = 'DELETE_SCRAPED_DATA'
     
 
 

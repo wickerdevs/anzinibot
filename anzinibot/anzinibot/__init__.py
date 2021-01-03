@@ -43,7 +43,8 @@ if os.environ.get('PORT') not in (None, ""):
     LOCALHOST = False    
 
 from anzinibot.models.worker import TaskQueue
-queue = TaskQueue(num_workers=3, names=['dms', 'tags'])
+dmqueue = TaskQueue(names=['dms'])
+tagqueue = TaskQueue(names=['tags'])
 
 # Initialize Bot
 from anzinibot.modules import config

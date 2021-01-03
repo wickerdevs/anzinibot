@@ -9,7 +9,7 @@ invalid_credentials_text = 'Your instagram credentials are incorrect... Please l
 verification_code_necessary = 'Your instagram account has 2FA turned on... In order for the bot to work, please turn it off.'
 private_account_error_text = 'The account {} is private - hence it\'s impossible to get it\'s followers. Please try again with another account using /follow'
 operation_error_text = 'There was an error when executing your request... The developer has been informed. The bot has interacted with {} users.'
-follow_successful_text = 'Operation successful! The bot has interacteed with {} of {}\'s!'
+follow_successful_text = 'Operation successful! The bot has interacteed with {} of {}\'s followers!'
 
 
 # START COMMAND
@@ -26,6 +26,11 @@ connection_found_text = '<b>Instagram Account</b>\nYou are currently logged into
 switch_account_text = 'Select below the account you\'d like to switch to, or log into another account:'
 no_accounts_available_text = 'No other accounts available. Click the button below to add another account to the selection.'
 switched_account_text = 'You switched to the <a href="https://www.instagram.com/{}/">{}</a> account. The bot\'s commands will now affect that account.'
+
+# Scrape Data
+confirm_clear_data_text = 'Are you sure you want to delete all scraped data (e.g. scraped followers, etc)?'
+scraped_data_cleared_text = 'All of your scraped data has been cleared.'
+cancelled_clear_data_text = 'Operation cancelled. None of your scraped data has been cleared.'
 
 
 #INSTAGRAM LOGIN CONVERSATION
@@ -61,6 +66,7 @@ incorrect_user_text = 'The username <b>{}</b> is invalid. Please try again with 
 input_message_text = 'Input below the message you would like me to send. (Try avoiding emojis or special characters as they might not get recognized by instagram)'
 input_accounts_text = 'Send below a text file containing a list of credentials of the accounts the bot should use for this operation:'
 input_proxies_text = 'Send below a text file containing a list of proxies the bot should use for this operation:'
+enqueing_dms_text = 'Enqueuing DM tasks...'
 enqueued_dms_text = 'DMs task enqueued successfully.'
 # Instagram
 inform_messages_status_text = 'Sending messages to {} users... {} sent so far...'

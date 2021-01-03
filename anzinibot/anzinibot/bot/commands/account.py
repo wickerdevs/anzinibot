@@ -11,7 +11,7 @@ def check_account(update, context):
         if instasession.get_creds():
             # User logged into instagram
             text = connection_found_text.format(instasession.username, instasession.username)
-            markup = CreateMarkup({Callbacks.LOGOUT: 'Log Out', Callbacks.SWITCH: 'Switch Account', Callbacks.EDIT_SETTINGS: 'Settings'}, cols=2).create_markup()
+            markup = CreateMarkup({Callbacks.LOGOUT: 'Log Out', Callbacks.SWITCH: 'Switch Account', Callbacks.SCRAPED_DATA: 'Clear Scraped Data'}, cols=2).create_markup()
             instasession.discard()
             message = send_message(update, context, text, markup)
         else:

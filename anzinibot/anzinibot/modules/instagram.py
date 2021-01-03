@@ -1,3 +1,5 @@
+import queue
+from anzinibot.models.worker import TaskQueue
 from anzinibot.models.pinnedmsg import PinnedMessage
 from functools import wraps
 from random import randrange
@@ -15,10 +17,11 @@ from instaclient.client.instaclient import InstaClient
 from instaclient.errors.common import FollowRequestSentError, InvaildPasswordError, InvalidUserError, PrivateAccountError, SuspisciousLoginAttemptError, VerificationCodeNecessary
 from instaclient.instagram.post import Post
 from anzinibot.models.instasession import InstaSession
-from anzinibot import applogger, queue, LOCALHEADLESS
+from anzinibot import applogger, tagqueue, dmqueue, LOCALHEADLESS
 import os, multiprocessing, logging, time, threading
 
 instalogger = logging.getLogger('instaclient')
+lock = threading.Lock()
 
 
 def insta_error_callback(driver):
@@ -47,35 +50,41 @@ def update_message(obj: InteractSession, text:str, final:bool=False):
         obj (InteractionSession): Object to get the `chat_id` and `message_id` from.
         text (str): The text to send via message
     """
-    from anzinibot import telegram_bot as bot
-    pinned:PinnedMessage = PinnedMessage.deserialize(bot, obj.user_id, obj.username, threading.current_thread().getName())
-    if pinned:
-        if not final:
-            pinned.update(text)
+    global lock
+    with lock:
+        from anzinibot import telegram_bot as bot
+        process = threading.current_thread().getName().split(':')[0]
+        pinned:PinnedMessage = PinnedMessage.deserialize(bot, obj.user_id, obj.username, process)
+        if pinned:
+            if not final:
+                pinned.update(text)
+            else:
+                pinned.final_update(text)
+            obj.set_message(pinned.message_id)
+            return pinned
         else:
-            pinned.final_update(text)
-        obj.set_message(pinned.message_id)
+            """ message_id = config.get_message(obj.get_user_id())
+            try:
+                bot.delete_message(chat_id=obj.user_id, message_id=message_id)
+            except Exception as error:
+                applogger.error(f'Unable to delete message of id {message_id}')
+                pass          """
+
+            if not final:
+                pinned = PinnedMessage.send(
+                    bot=bot,
+                    process=process,
+                    user_id=obj.user_id,
+                    account=obj.username,
+                    message_id=obj.message_id,
+                    text=text
+                )
+            else:
+                pinned = PinnedMessage(bot, process, obj.user_id, obj.username, obj.message_id, text)
+                pinned.final_update(text)
+            obj.set_message(pinned.message_id)
+            applogger.debug(f'Sent pinned message of id {pinned.message_id}')
         return pinned
-    else:
-        message_id = config.get_message(obj.get_user_id())
-        try:
-            bot.delete_message(chat_id=obj.user_id, message_id=message_id)
-        except Exception as error:
-            applogger.error(f'Unable to delete message of id {message_id}')
-            pass         
-
-        pinned = PinnedMessage.send(
-            bot=bot,
-            thread_name=threading.current_thread().getName(),
-            user_id=obj.user_id,
-            account=obj.username,
-            message_id=obj.message_id,
-            text=text
-        )
-
-        obj.set_message(pinned.message_id)
-        applogger.debug(f'Sent pinned message of id {pinned.message_id}')
-    return pinned
 
 
 def init_client():
@@ -101,6 +110,105 @@ def scrape_callback(scraped:List[str], session:InteractSession):
     session.set_scraped(scraped)
     session.save_scraped()
     update_message(session, scrape_followers_callback_text.format(len(scraped)))
+
+
+def check_dm_queue():
+    result = dmqueue.unfinished_tasks()
+    if result > 0:
+        return True
+    else:
+        return False
+
+
+def enqueue_dm_process(session:InteractSession):
+    dmqueue.add_task(enqueue_dms, session)
+
+
+@error_proof
+def enqueue_dms(session:InteractSession):
+    account_jobs:List[List[str]] = list()
+    session.get_creds()
+
+    # TODO: Scrape Users
+    update_message(session, enqueing_dms_text)
+    if not session.get_scraped():
+        result = scrape_job(session)
+        if result[0]:
+            followers = result[1].get_scraped()
+        else:
+            return (False, session)
+    else:
+        followers = session.get_scraped()
+
+    # Get Available Accounts
+    for account in session.accounts.keys():
+        account_jobs.append(list())
+    applogger.debug(f'Account Jobs: {account_jobs}')
+
+    # Divide Targets between available accounts
+    for index, follower in enumerate(followers):
+        index = index % len(account_jobs)
+        account_jobs[index].append(follower)
+    applogger.debug(f'Account Jobs: {account_jobs}')
+
+    # Turn into Dict:
+    tasks_args = dict()
+    for index, account in enumerate(list(session.accounts.keys())):
+        tasks_args[account] = account_jobs[index]
+    applogger.debug(f'Tassk Args: {tasks_args}')
+
+    # Thread names list:
+    names = list()
+    for account in session.accounts.keys():
+        names.append(f'dms:{session.user_id}:{account}')
+    applogger.debug(f'Thread names: {names}')
+
+    # Enqueue all tasks in different queues
+    subqueue = TaskQueue(num_workers=len(session.accounts.keys()), names=names)
+    for index, account in enumerate(session.accounts.keys()):
+        creds = {account: session.accounts.get(account)}
+        subqueue.add_task(dm_job, session=session, creds=creds, targets=tasks_args.get(account))
+    applogger.info(f'Started {len(subqueue.workers)} DM threads')
+    
+    # Wait for everything to finish
+    subqueue.close()
+    applogger.info(f'Messaged {len(session.get_messaged())} users out of {len(followers)}')
+
+    update_message(session, follow_successful_text.format(len(session.get_messaged()), session.target), final=True)
+    return (True, session)
+
+
+def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool, Optional[InteractSession]]:
+    applogger.info(f'Starting Dm Job <{session.target}>')
+    
+    client = init_client()
+    update_message(session, logging_in_text)
+    try:
+        client.login(list(creds.keys())[0], creds.get(list(creds.keys())[0]))
+    except (InvalidUserError, InvaildPasswordError):
+        client.disconnect()
+        return (False, None)
+    except VerificationCodeNecessary:
+        client.disconnect()
+        return (False, None)
+
+    # FOR EACH USER
+    for index, follower in enumerate(targets):
+        # Send DM to User
+        update_message(session, inform_messages_status_text.format(len(session.get_scraped()), len(session.get_messaged())))
+        try:
+            client.send_dm(follower, session.get_text())
+            global lock
+            with lock:
+                session.add_messaged(follower)
+            if len(targets) > 25:
+                update_message(session, 'Waiting a bit...')
+                time.sleep(randrange(8, 20))
+        except Exception as error:
+            applogger.error(f'Error in sending message to <{follower}>', exc_info=error)
+
+    client.disconnect()
+    return (True, session)
 
 
 @error_proof
@@ -131,51 +239,3 @@ def scrape_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]
         return (False, None)
 
 
-def enqueue_dm(session:InteractSession):
-    #result = interaction_job(session)
-    queue.add_task(dm_job, session)
-
-
-@error_proof
-def dm_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]]:
-    applogger.info(f'Starting Dm Job <{session.target}>')
-    session.get_creds()
-    # TODO: Scrape Users
-    if not session.get_scraped():
-        result = scrape_job(session)
-        if result[0]:
-            followers = result[1].get_scraped()
-        else:
-            return (False, session)
-    else:
-        followers = session.get_scraped()
-
-    client = init_client()
-    update_message(session, logging_in_text)
-    try:
-        client.login(session.username, session.password)
-    except (InvalidUserError, InvaildPasswordError):
-        client.disconnect()
-        return (False, None)
-    except VerificationCodeNecessary:
-        client.disconnect()
-        return (False, None)
-    
-    session.set_interaction(Interaction(session.target))
-
-    # FOR EACH USER
-    for index, follower in enumerate(followers):
-        # Send DM to User
-        update_message(session, inform_messages_status_text.format(len(followers), index))
-        try:
-            client.send_dm(follower, session.get_text())
-            session.add_messaged(follower)
-            if len(followers) > 25:
-                update_message(session, 'Waiting a bit...')
-                time.sleep(randrange(8, 20))
-        except Exception as error:
-            applogger.error(f'Error in sending message to <{follower}>', exc_info=error)
-
-    update_message(session, follow_successful_text.format(len(session.get_messaged()), session.target), final=True)
-    client.disconnect()
-    return (True, session)

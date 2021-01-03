@@ -10,7 +10,7 @@ def delpinnedmsg_def(update:Update, context:CallbackContext):
             bot=context.bot,
             user_id=int(data[1]),
             account=data[2],
-            thread_name=data[3]
+            process=data[3]
         )
         pinned.delete()
     except Exception as error:

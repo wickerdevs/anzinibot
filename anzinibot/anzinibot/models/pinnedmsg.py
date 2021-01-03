@@ -1,3 +1,7 @@
+import threading
+from cryptography.hazmat.primitives.asymmetric import ec
+
+from telegram.error import BadRequest
 from anzinibot import applogger
 from telegram.parsemode import ParseMode
 from anzinibot.modules import config
@@ -10,20 +14,21 @@ from anzinibot.models.markup import CreateMarkup
 
 
 class PinnedMessage():
-    def __init__(self, bot:'MQBot', thread_name:str, user_id:int, account:str, message_id:int, text:str) -> None:
+    def __init__(self, bot:'MQBot', process:str, user_id:int, account:str, message_id:int, text:str, message:Optional['Message']=None) -> None:
         self.bot = bot
         self.message_id = message_id
         self.user_id = user_id
         self.account = account
         self.text = text
-        self.thread_name = thread_name
+        self.process = process
+        self.message = message
 
     
     def to_dict(self):
         data = dict()
 
         for key in iter(self.__dict__):
-            if key == 'bot':
+            if key in ('bot', 'message'):
                 continue
 
             value = self.__dict__[key]
@@ -44,22 +49,33 @@ class PinnedMessage():
 
 
     def update(self, text:str):
-        text = f'<b>PINNED MESSAGE</b>\n<b>Account:</b> {self.account}\n<b>Task:</b> {self.thread_name}\n' + text
+        try:
+            thread = threading.current_thread().getName().split(':')[2]
+        except:
+            thread = self.account
+
+        text = f'<b>PINNED MESSAGE</b>\n<b>Task:</b> {self.process}\n<b>Thread:</b> {thread}\n' + text
+        if self.text == text:
+            return self
         try:
             message = self.bot.edit_message_text(text=text, chat_id=self.user_id, message_id=self.message_id, parse_mode=ParseMode.HTML)
-        except:
+        except Exception as error:
+            applogger.warning(f'Error editing pinned message: ', exc_info=error)
             message = self.bot.send_message(chat_id=self.user_id, text=text, parse_mode=ParseMode.HTML)
+        
+        self.message = message
         self.message_id = message.message_id
+        self.text = text
         self.save()
-        return message
+        return self
 
     
     def final_update(self, text:str):
-        message = self.update(text)
-        markup = CreateMarkup({f'{Callbacks.DELETE_PINNED_MESSAGE}:{self.user_id}:{self.account}:{self.thread_name}': 'Hide'}).create_markup()
-        message.edit_reply_markup(reply_markup=markup)
+        pinned = self.update(text)
+        markup = CreateMarkup({f'{Callbacks.DELETE_PINNED_MESSAGE}:{self.user_id}:{self.account}:{self.process}': 'Hide'}).create_markup()
+        pinned.message.edit_reply_markup(reply_markup=markup)
         applogger.debug('Sent final Pinned Message with markup')
-        return message
+        return pinned
 
 
     def delete(self):
@@ -72,8 +88,8 @@ class PinnedMessage():
         if not data:
             return True
 
-        if f'{self.user_id}:{self.account}:{self.thread_name}' in data.keys():
-            del data[f'{self.user_id}:{self.account}:{self.thread_name}']
+        if f'{self.user_id}:{self.account}:{self.process}' in data.keys():
+            del data[f'{self.user_id}:{self.account}:{self.process}']
             config.set('PINNED', data)
         return True
 
@@ -83,19 +99,20 @@ class PinnedMessage():
         if not pinned:
             pinned = dict()
         
-        pinned[f'{self.user_id}:{self.account}:{self.thread_name}'] = self.to_dict()
+        pinned[f'{self.user_id}:{self.account}:{self.process}'] = self.to_dict()
         config.set('PINNED', pinned)
 
 
     @classmethod
-    def deserialize(cls, bot:'MQBot', user_id:int, account:str, thread_name:str):
+    def deserialize(cls, bot:'MQBot', user_id:int, account:str, process:str):
         data = config.get('PINNED')
         if not data:
+            applogger.debug(f'No pinned found with {user_id} and {process}')
             return None
 
-        selected = data.get(f'{user_id}:{account}:{thread_name}')
+        selected = data.get(f'{user_id}:{account}:{process}')
         if not selected:
-            applogger.debug(f'No pinned found with {user_id} and {thread_name}')
+            applogger.debug(f'No pinned found with {user_id} and {process}')
             return None
 
         return cls.de_dict(bot, selected)
