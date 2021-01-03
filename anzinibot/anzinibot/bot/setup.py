@@ -39,10 +39,9 @@ def setup(updater):
             InteractStates.COUNT: [CallbackQueryHandler(select_count)],
             InteractStates.MESSAGE: [MessageHandler(Filters.text, input_message)],
             InteractStates.INPUTACCOUNTS: [MessageHandler(Filters.document, input_accounts)],
-            InteractStates.INPUTPROXIES: [MessageHandler(Filters.document, input_proxies)],
             InteractStates.CONFIRM: [CallbackQueryHandler(confirm_dms)],
         },
-        fallbacks=[CallbackQueryHandler(cancel_send_dm, pattern=Callbacks.CANCEL), CallbackQueryHandler(skip, pattern=Callbacks.SKIP)]
+        fallbacks=[CallbackQueryHandler(cancel_send_dm, pattern=Callbacks.CANCEL), CallbackQueryHandler(dm_skip, pattern=Callbacks.SKIP)]
     )
 
 

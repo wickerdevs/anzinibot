@@ -141,6 +141,9 @@ def enqueue_dms(session:InteractSession):
         followers = session.get_scraped()
 
     # Get Available Accounts
+    if not session.accounts:
+        session.get_creds()
+        session.set_accounts({session.username: session.password})
     for account in session.accounts.keys():
         account_jobs.append(list())
     applogger.debug(f'Account Jobs: {account_jobs}')
@@ -201,11 +204,13 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
             global lock
             with lock:
                 session.add_messaged(follower)
-            if len(targets) > 25:
-                update_message(session, 'Waiting a bit...')
-                time.sleep(randrange(8, 20))
         except Exception as error:
             applogger.error(f'Error in sending message to <{follower}>', exc_info=error)
+        finally:
+            if len(session.get_scraped()) > 15:
+                text = inform_messages_status_text.format(len(session.get_scraped()), len(session.get_messaged())) + f'\nWaiting a bit...'
+                update_message(session, text)
+                time.sleep(randrange(60, 180))
 
     client.disconnect()
     return (True, session)

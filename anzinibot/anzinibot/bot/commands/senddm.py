@@ -140,26 +140,22 @@ def input_message(update, context):
     session.set_text(text)
     update.message.delete()
 
-    markup = CreateMarkup({f'{Callbacks.SKIP}:{InteractStates.INPUTPROXIES}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
+    markup = CreateMarkup({f'{Callbacks.SKIP}:{InteractStates.CONFIRM}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
     send_message(update, context, input_accounts_text, markup)
     return InteractStates.INPUTACCOUNTS
 
 
-def skip(update, context):
+def dm_skip(update, context):
     session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
     if not session: 
         return
 
     data = update.callback_query.data
-    print(f'Skipping: {data}')
-    if str(InteractStates.INPUTPROXIES) in data:
-        markup = CreateMarkup({Callbacks.SKIP: 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
-        send_message(update, context, input_proxies_text, markup)
-        return InteractStates.INPUTPROXIES
-    else:
-        markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
-        send_message(update, context, confirm_dms_text.format(session.count), markup)
-        return InteractStates.CONFIRM
+    print(f'Skip to: {data}')
+
+    markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
+    send_message(update, context, confirm_dms_text.format(session.count), markup)
+    return InteractStates.CONFIRM
     
 
 def input_accounts(update:Update, context:CallbackContext):
@@ -179,24 +175,6 @@ def input_accounts(update:Update, context:CallbackContext):
             accounts[cred[0]] = cred[1]
 
         session.set_accounts(accounts)
-    
-    markup = CreateMarkup({f'{Callbacks.SKIP}:{InteractStates.CONFIRM}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
-    send_message(update, context, input_proxies_text, markup)
-    return InteractStates.INPUTPROXIES
-
-
-def input_proxies(update, context):
-    session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
-    if not session: 
-        return
-    
-    # writing to a custom file
-    with open("config/proxies.txt", 'wb') as f:
-        context.bot.get_file(update.message.document).download(out=f)
-
-    with open('config/proxies.txt', 'r') as file:
-        proxies = file.read().replace('\n', '')
-        session.set_accounts(proxies)
     
     markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
     send_message(update, context, confirm_dms_text.format(session.count), markup)
