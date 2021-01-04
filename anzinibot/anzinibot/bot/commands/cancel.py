@@ -1,5 +1,4 @@
 from anzinibot.bot.commands import *
-from anzinibot import updater
 
 
 def cancel_def(update, context:CallbackContext):

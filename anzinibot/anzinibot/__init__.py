@@ -51,18 +51,19 @@ from anzinibot.modules import config
 BOT_TOKEN = config.get('BOT_TOKEN')
 URL = config.get('SERVER_APP_DOMAIN')
 PORT = int(os.environ.get('PORT', 5000))
+from anzinibot.bot import setup
 
 # set connection pool size for bot 
 request = Request(con_pool_size=8)
 defaults = Defaults(parse_mode=ParseMode.HTML, run_async=True, disable_web_page_preview=True)
 q = mq.MessageQueue(all_burst_limit=3, all_time_limit_ms=3000)
 telegram_bot = MQBot(BOT_TOKEN, request=request, mqueue=q, defaults=defaults)
-updater = Updater(bot=telegram_bot, use_context=True)
+pre_updater = Updater(bot=telegram_bot, use_context=True)
 
 # SET UP BOT COMMAND HANDLERS
 applogger.debug(f'Initiate setup')
-from anzinibot.bot import setup
-setup.setup(updater)
+updater = setup.setup(pre_updater)
+applogger.info('Setup complete')
 
 
         

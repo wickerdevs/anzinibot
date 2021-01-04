@@ -15,6 +15,7 @@ from anzinibot.bot.commands.clearscraped import *
 from anzinibot.bot.commands.incorrect import *
 from anzinibot.models.callbacks import *
 
+applogger.debug('Setup module imported')
 
 def setup(updater):
     telelogger.debug('Bot setup running...')
