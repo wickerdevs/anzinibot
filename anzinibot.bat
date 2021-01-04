@@ -4,14 +4,14 @@ python --version 2>NUL
 if errorlevel 1 goto errorNoPython
 
 :: Python is Installed
-CD ozanbot
+CD anzinibot
 if exist .env (pip install -r requirements.txt) else (python -m venv .env & call .env/Scripts/activate & pip install -r requirements.txt)
 
 set env=python.exe
 ::cd ozanbot
 call .env/Scripts/activate
 echo Activated Enviroment
-python ozanbot.py
+python anzinibot.py
 echo Started bot.
 
 PAUSE
