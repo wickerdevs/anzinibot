@@ -7,7 +7,7 @@ def start_def(update, context):
 
     settings = config.get_settings(update.effective_chat.id)
     if settings and hasattr(settings, 'settings') and settings.settings is not None:
-        markup = CreateMarkup({Callbacks.EDIT_SETTINGS: 'Edit Settings', Callbacks.ACCOUNT: 'Account Info'}, cols=2).create_markup()
+        markup = CreateMarkup({Callbacks.ACCOUNT: 'Account Info'}, cols=2).create_markup()
         send_message(update, context, startup_done, markup)
         settings.discard()
         return ConversationHandler.END

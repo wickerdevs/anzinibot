@@ -21,6 +21,7 @@ class Persistence(object):
     START = 'start'
     SETTINGS = 'settings'
     INTERACT = 'interact'
+    TAG = 'tag'
     
     
     def __init__(self, method, user_id, message_id=None):

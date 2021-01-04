@@ -1,3 +1,4 @@
+from anzinibot.modules.config import get_message
 from typing import Dict, List, Union, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from instaclient.instagram import *
@@ -9,10 +10,12 @@ class Interaction:
     target:Union['Profile', str],
     scraped:List[str]=None,
     failed:List[str]=None,
-    messaged:List[str]=None) -> None:
+    messaged:List[str]=None,
+    tagged:List[str]=None) -> None:
         self.target = target
         self.scraped = scraped
         self.messaged = messaged
+        self.tagged = tagged
         self.failed = failed
         
 
@@ -31,8 +34,10 @@ class Interaction:
                 return True
         return False
 
+
     def __getitem__(self, item: str):
         return self.__dict__[item]
+
 
     def to_dict(self):
         data = dict()
@@ -50,6 +55,7 @@ class Interaction:
                     data[key] = value
         return data
 
+
     @classmethod
     def de_json(cls, data: dict, client:Optional['InstaClient']=None):
 
@@ -63,19 +69,25 @@ class Interaction:
         obj = cls(**data)  # type: ignore[call-arg]
         return obj
 
-    
 
     def set_scraped(self, scraped:List[str]):
         self.scraped = scraped
 
-    def add_followed(self, profile:'Profile'):
-        if profile not in self.followed:
-            self.followed.append(profile)
 
-    def add_liked(self, post:'Post'):
-        if post not in self.liked:
-            self.liked.append(post)
+    def add_messaged(self, username:str):
+        if not self.messaged:
+            self.messaged = list()
+        if username not in self.messaged:
+            self.messaged.append(username)
 
-    def add_commented(self, post:'Post'):
-        if post not in self.liked:
-            self.liked.append(post)
+    
+    def add_tagged(self, username:str):
+        if not self.tagged:
+            self.tagged = list()
+        
+        if isinstance(username, str) and username not in self.tagged:
+            self.tagged.append(username)
+        elif isinstance(username, list):
+            for user in username:
+                if user not in self.tagged:
+                    self.tagged.append(user)

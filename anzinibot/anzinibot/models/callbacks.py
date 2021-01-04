@@ -13,7 +13,8 @@ class Callbacks:
 
 
     # BUTTON CALLBACKS
-    SKIP = 'SKIP'
+    DMSKIP = 'DMSKIP'
+    TAGSKIP = 'TAGSKIP'
     SELECTSWITCH = 'SELECTSWITCH'
     CANCEL = 'CANCEL'
     NONE = 'NONE'
@@ -53,9 +54,17 @@ class InteractStates:
     SCRAPEACCOUNT = 2
     COUNT = 3
     INPUTACCOUNTS = 7
-    INPUTPROXIES = 8
     MESSAGE = 4
     CONFIRM = 5
+
+
+class TagStates:
+    POST_URL = 1
+    SCRAPE = 2
+    SCRAPEACCOUNT = 3
+    COUNT = 4
+    INPUTACCOUNTS = 5
+    CONFIRM = 6
 
 
 class SettingsStates:

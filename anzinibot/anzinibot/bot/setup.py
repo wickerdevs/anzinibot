@@ -9,6 +9,7 @@ from anzinibot.bot.commands.logout import *
 from anzinibot.bot.commands.account import *
 from anzinibot.bot.commands.start import *
 from anzinibot.bot.commands.senddm import *
+from anzinibot.bot.commands.tag import *
 from anzinibot.bot.commands.delpinnedmsg import *
 from anzinibot.bot.commands.clearscraped import *
 from anzinibot.bot.commands.incorrect import *
@@ -41,7 +42,20 @@ def setup(updater):
             InteractStates.INPUTACCOUNTS: [MessageHandler(Filters.document, input_accounts)],
             InteractStates.CONFIRM: [CallbackQueryHandler(confirm_dms)],
         },
-        fallbacks=[CallbackQueryHandler(cancel_send_dm, pattern=Callbacks.CANCEL), CallbackQueryHandler(dm_skip, pattern=Callbacks.SKIP)]
+        fallbacks=[CallbackQueryHandler(cancel_send_dm, pattern=Callbacks.CANCEL), CallbackQueryHandler(dm_skip, pattern=Callbacks.DMSKIP)]
+    )
+
+    tag_handler = ConversationHandler(
+        entry_points=[CommandHandler('tag', tag_def)],
+        states={
+            TagStates.POST_URL: [MessageHandler(Filters.text, input_post_url)],
+            TagStates.SCRAPE: [CallbackQueryHandler(select_tag_scrape)],
+            TagStates.SCRAPEACCOUNT: [MessageHandler(Filters.text, select_tag_scrape_account)],
+            TagStates.COUNT: [CallbackQueryHandler(select_tag_count)],
+            TagStates.INPUTACCOUNTS: [MessageHandler(Filters.document, input_tag_accounts)],
+            TagStates.CONFIRM: [CallbackQueryHandler(confirm_tags)],
+        },
+        fallbacks=[CallbackQueryHandler(cancel_tag, pattern=Callbacks.CANCEL), CallbackQueryHandler(tag_skip, pattern=Callbacks.TAGSKIP)]
     )
 
 
@@ -66,6 +80,7 @@ def setup(updater):
     
     dp.add_handler(instagram_handler)
     dp.add_handler(dm_handler)
+    dp.add_handler(tag_handler)
 
     # OTHERS
     dp.add_handler(CallbackQueryHandler(delpinnedmsg_def, pattern=Callbacks.DELETE_PINNED_MESSAGE))

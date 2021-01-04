@@ -32,13 +32,16 @@ def send_photo(name, context, update):
 
 def send_message(update:Update, context:CallbackContext, message:str, markup=None):
     if update.callback_query:
-        update.callback_query.answer()
-        if markup:
-            message = update.callback_query.edit_message_text(text=message, reply_markup=markup)
-        else:
-            message = update.callback_query.edit_message_text(text=message)
-        config.set_message(update.effective_user.id, message.message_id)
-        return message
+        try:
+            update.callback_query.answer()
+            if markup:
+                message = update.callback_query.edit_message_text(text=message, reply_markup=markup)
+            else:
+                message = update.callback_query.edit_message_text(text=message)
+            config.set_message(update.effective_user.id, message.message_id)
+            return message
+        except:
+            pass
 
     elif config.get_message(update.effective_chat.id):
         message_id = config.get_message(update.effective_chat.id)

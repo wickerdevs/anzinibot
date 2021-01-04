@@ -8,6 +8,10 @@ def senddm_def(update, context):
     if not check_auth(update, context):
         return ConversationHandler.END
 
+    if instagram.check_dm_queue():
+        send_message(update, context, dm_queue_full_text)
+        return ConversationHandler.END
+
     # Check LoginStatus
     session:InteractSession = InteractSession(update.effective_user.id)
     
@@ -140,7 +144,7 @@ def input_message(update, context):
     session.set_text(text)
     update.message.delete()
 
-    markup = CreateMarkup({f'{Callbacks.SKIP}:{InteractStates.CONFIRM}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
+    markup = CreateMarkup({f'{Callbacks.DMSKIP}:{InteractStates.CONFIRM}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
     send_message(update, context, input_accounts_text, markup)
     return InteractStates.INPUTACCOUNTS
 

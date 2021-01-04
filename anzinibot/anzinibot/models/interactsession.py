@@ -7,9 +7,10 @@ import time
 
 
 class InteractSession(InstaSession):
-    def __init__(self, user_id:int, target:str=None, message_id:int=None, text:str=None, accounts: Optional[dict]=None, proxies:Optional[List[str]]=None, interaction:Optional[Interaction]=None) -> None:
-        super(InstaSession, self).__init__(method=Persistence.INTERACT, user_id=user_id, message_id=message_id)
+    def __init__(self, user_id:int, method:str=Persistence.INTERACT, target:str=None, post:str=None, message_id:int=None, text:str=None, accounts: Optional[dict]=None, proxies:Optional[List[str]]=None, interaction:Optional[Interaction]=None) -> None:
+        super(InstaSession, self).__init__(method=method, user_id=user_id, message_id=message_id)
         self.target = target
+        self.post = post
         self.count = 0
         self.text = text
         self.accounts = accounts
@@ -38,6 +39,11 @@ class InteractSession(InstaSession):
             return list()
         return self.interaction.messaged.copy()
 
+    def get_tagged(self):
+        if not self.interaction.tagged:
+            return list()
+        return self.interaction.tagged.copy()
+
     def get_failed(self):
         if not self.interaction.failed:
             return list()
@@ -50,6 +56,10 @@ class InteractSession(InstaSession):
     @persistence_decorator
     def set_target(self, target):
         self.target = target
+
+    @persistence_decorator
+    def set_post(self, shortcode):
+        self.post = shortcode
 
     @persistence_decorator
     def set_count(self, count):
@@ -76,6 +86,10 @@ class InteractSession(InstaSession):
         self.interaction.messaged = messaged
 
     @persistence_decorator
+    def set_tagged(self, tagged:list):
+        self.interaction.tagged = tagged
+
+    @persistence_decorator
     def set_failed(self, failed):
         self.interaction.failed = failed
 
@@ -89,9 +103,12 @@ class InteractSession(InstaSession):
 
     @persistence_decorator
     def add_messaged(self, messaged):
-        if not self.interaction.messaged:
-            self.interaction.messaged = list()
-        self.interaction.messaged.append(messaged)
+        self.interaction.add_messaged(messaged)
+
+
+    @persistence_decorator
+    def add_tagged(self, tagged:str):
+        self.interaction.add_tagged(tagged)
 
 
     def save_scraped(self):

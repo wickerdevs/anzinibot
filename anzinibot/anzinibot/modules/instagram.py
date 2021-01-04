@@ -11,7 +11,7 @@ from anzinibot.models.setting import Setting
 from anzinibot.models.interactsession import InteractSession
 from anzinibot.modules import config
 from anzinibot.texts import *
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, final
 from anzinibot import CONFIG_DIR, CONFIG_FOLDER
 from instaclient.client.instaclient import InstaClient
 from instaclient.errors.common import FollowRequestSentError, InvaildPasswordError, InvalidUserError, PrivateAccountError, SuspisciousLoginAttemptError, VerificationCodeNecessary
@@ -113,13 +113,21 @@ def scrape_callback(scraped:List[str], session:InteractSession):
 
 
 def check_dm_queue():
-    result = dmqueue.unfinished_tasks()
+    result = dmqueue.unfinished_tasks
     if result > 0:
         return True
-    else:
-        return False
+    return False
 
 
+def check_tag_queue():
+    result = tagqueue.unfinished_tasks
+    if result > 0:
+        return True
+    return False
+
+
+#################################################
+### DM PROCESS ##################################
 def enqueue_dm_process(session:InteractSession):
     dmqueue.add_task(enqueue_dms, session)
 
@@ -216,6 +224,135 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
     return (True, session)
 
 
+#################################################
+### TAG PROCESS ##################################
+def enqueue_tag_process(session:InteractSession):
+    tagqueue.add_task(enqueue_tags, session)
+
+
+def enqueue_tags(session:InteractSession):
+    account_jobs:List[List[str]] = list()
+    session.get_creds()
+
+    # TODO: Scrape Users
+    update_message(session, enqueing_tags_text)
+    if not session.get_scraped():
+        result = scrape_job(session)
+        if result[0]:
+            followers = result[1].get_scraped()
+        else:
+            return (False, session)
+    else:
+        followers = session.get_scraped()
+
+    # Get Available Accounts
+    if not session.accounts:
+        session.get_creds()
+        session.set_accounts({session.username: session.password})
+    for account in session.accounts.keys():
+        account_jobs.append(list())
+    applogger.debug(f'Account Jobs: {account_jobs}')
+
+    # Divide Targets between available accounts
+    for index, follower in enumerate(followers):
+        index = index % len(account_jobs)
+        account_jobs[index].append(follower)
+    applogger.debug(f'Account Jobs: {account_jobs}')
+
+    # Turn into Dict:
+    tasks_args = dict()
+    for index, account in enumerate(list(session.accounts.keys())):
+        tasks_args[account] = account_jobs[index]
+    applogger.debug(f'Tassk Args: {tasks_args}')
+
+    # Thread names list:
+    names = list()
+    for account in session.accounts.keys():
+        names.append(f'tags:{session.user_id}:{account}')
+    applogger.debug(f'Thread names: {names}')
+
+    # Enqueue all tasks in different queues
+    subqueue = TaskQueue(num_workers=len(session.accounts.keys()), names=names)
+    for index, account in enumerate(session.accounts.keys()):
+        creds = {account: session.accounts.get(account)}
+        subqueue.add_task(tag_job, session=session, creds=creds, targets=tasks_args.get(account))
+    applogger.info(f'Started {len(subqueue.workers)} TAG threads')
+    
+    # Wait for everything to finish
+    subqueue.close()
+    applogger.info(f'Tagged {len(session.get_tagged())} users out of {len(followers)}')
+
+    update_message(session, follow_successful_text.format(len(session.get_tagged()), session.target), final=True)
+    return (True, session)
+
+
+def tag_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool, Optional[InteractSession]]:
+    global lock
+    applogger.info(f'Starting Tag Job <{session.target}>')
+    
+    client = init_client()
+    update_message(session, logging_in_text)
+    try:
+        client.login(list(creds.keys())[0], creds.get(list(creds.keys())[0]))
+    except (InvalidUserError, InvaildPasswordError):
+        client.disconnect()
+        return (False, None)
+    except VerificationCodeNecessary:
+        client.disconnect()
+        return (False, None)
+
+    # GET POST
+    try:
+        post = client.get_post(session.post)
+    except:
+        applogger.exception(f'Impossible to get post of shortcode <{session.post}>')
+        update_message(session, error_getting_post_text.format(session.post), final=True)
+        return (False, session)
+
+
+    users:List[List[str]] = list()
+    sublist:List[str] = list()
+    for user in targets:
+        if len(sublist) < 5:
+            sublist.append(user)
+            continue
+        users.append(sublist)
+        sublist = list()
+    if len(sublist) > 0:
+        users.append(sublist)
+    applogger.debug(f'Users Divided List: {users}')
+
+
+    for sublist in users:
+        text = ''
+        for index, user in enumerate(sublist):
+            text += f'@{user} '
+        applogger.debug(f'Text: {text}')
+
+        # Send DM to User
+        url = 'https://www.instagram.com/p/{}/'.format(session.post)
+        update_message(session, inform_tags_status_text.format(len(session.get_scraped()), url, len(session.get_tagged())))
+        try:
+            post.add_comment(text)
+            with lock:
+                session.add_tagged(sublist)
+        except Exception as error:
+            applogger.error(f'Error in tagging users to <{session.post}>', exc_info=error)
+            with lock:
+                for username in sublist:
+                    session.add_failed(username)
+        finally:
+            if len(session.get_scraped()) > 15:
+                text = inform_tags_status_text.format(len(session.get_scraped()), url, len(session.get_tagged())) + f'\nWaiting a bit...'
+                update_message(session, text)
+                time.sleep(randrange(5, 25))
+
+    client.disconnect()
+    return (True, session)
+
+
+#################################################
+### SCRAPE PROCESS ##################################
 @error_proof
 def scrape_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]]:
     client = init_client()
@@ -242,5 +379,3 @@ def scrape_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]
         client.disconnect()
         update_message(session, operation_error_text.format(len(session.get_scraped())))
         return (False, None)
-
-

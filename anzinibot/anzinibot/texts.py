@@ -61,22 +61,36 @@ error_loggingout_text = 'There was an error when trying to log out of instagram.
 
 
 # SEND DM CONVERSATION
+dm_queue_full_text = 'A DM task is already running. Please wait for that task to finish first, before launching another.'
 select_scrape_text = 'Select below the selection of users to send your DM to:'
 incorrect_user_text = 'The username <b>{}</b> is invalid. Please try again with another instagram username:'
 input_message_text = 'Input below the message you would like me to send. (Try avoiding emojis or special characters as they might not get recognized by instagram)'
 input_accounts_text = 'Send below a text file containing a list of credentials of the accounts the bot should use for this operation:'
-input_proxies_text = 'Send below a text file containing a list of proxies the bot should use for this operation:'
+confirm_dms_text = 'Are you sure you want to send your message to {} users?'
 enqueing_dms_text = 'Enqueuing DM tasks...'
 enqueued_dms_text = 'DMs task enqueued successfully.'
 # Instagram
 inform_messages_status_text = 'Sending messages to {} users... {} sent so far...'
 
 
+# TAG CONVERSATION
+tag_queue_full_text = 'A Tag task is already running. Please wait for that task to finish first, before launching another.'
+select_tag_scrape_text = 'Select below the selection of users to tag under your post:'
+input_post_url_text = 'Input below the url link of the target post below, as follows: \n<code>https://www.instagram.com/p/CIqua7YHtha/</code>:'
+checking_post_text = 'Checking post url...'
+invalid_post_url_text = 'The url you entered is not valid. Please try again: '
+confirm_tags_text = 'Are you sure you want to tag {} users under your post?'
+enqueing_tags_text = 'Enqueuing DM tasks...'
+enqueued_tags_text = 'TAGs task enqueued successfully.'
+# Instagram
+inform_tags_status_text = 'Attaching {} tags to <a href="{}">this post</a>... {} sent so far...'
+error_getting_post_text = 'There was an error loading the post with shortcode <b>{}</b>... Please try again later.'
+
+
 # SCRAPE CONVERSATION
 select_account_text = 'Insert below the username of the account you want to scrape:'
 error_when_checking_account = 'There was an error when checking {}\'s vadility... The account might be inexistent or private. Please choose another account:'
 select_count_text = 'Select below the amount of users you would like to send your message to:'
-confirm_dms_text = 'Are you sure you want to send your message to {} users?'
 launching_operation_text = 'Starting operation...'
 scrape_followers_callback_text = 'Scraped {} followers...'
 follow_cancelled_text  = 'The request cancelled.'
@@ -104,4 +118,4 @@ not_logged_in_text = 'To use this command you must log in first with /login'
 no_settings_found_text = 'No settings where found... Please use /start to set up the bot first.'
 
 # HELP COMMAND
-help_text = '<b>FF INSTA BOT</b>\n/account - Check instagram connection(s)\n\n/login - Log into another instagram account\n\n/logout - Log out of current instagram\n\n/dm - Send DMs\n\n/start - Run Bot Setup'
+help_text = '<b>FF INSTA BOT</b>\n/account - Check instagram connection(s)\n\n/login - Log into another instagram account\n\n/logout - Log out of current instagram\n\n/dm - Send DMs\n\n/tag - Tag users to a post\n\n/start - Run Bot Setup'

@@ -8,14 +8,53 @@ def tag_def(update, context):
     if not check_auth(update, context):
         return ConversationHandler.END
 
+    if instagram.check_tag_queue():
+        send_message(update, context, tag_queue_full_text)
+        return ConversationHandler.END
+
     # Check LoginStatus
-    session:InteractSession = InteractSession(update.effective_user.id)
+    session:InteractSession = InteractSession(update.effective_user.id, InteractSession.TAG)
     
     if not session.get_creds():
         # Not Logged In
         message = send_message(update, context, not_logged_in_text)
         session.discard()
         return ConversationHandler.END
+
+    markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
+    message = send_message(update, context, input_post_url_text, markup)
+    session.set_message(message.message_id)
+    return TagStates.POST_URL
+
+
+def input_post_url(update, context):
+    print('Input Post')
+    session:InteractSession = InteractSession.deserialize(InteractSession.TAG, update)
+    if not session:
+        return
+
+    # https://www.instagram.com/p/CIqua7YHtha/
+    
+    url:str = update.message.text
+    telelogger.warn(f'Url: {url}')
+
+    send_message(update, context, checking_post_text)
+    client = instagram.init_client()
+    try:
+        shortcode = url.replace('https://www.instagram.com/p/', '')
+        telelogger.warn(f'Url: {shortcode}')
+        shortcode = shortcode.replace('/', '')
+        telelogger.warn(f'Url: {shortcode}')
+        post = client.get_post(shortcode, context=False)
+        session.set_post(shortcode)
+    except Exception as error:
+        client.disconnect()
+        telelogger.warning(f'The url <{url}> is invalid.', exc_info=error)
+        markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
+        send_message(update, context, invalid_post_url_text, markup)
+        return TagStates.POST_URL
+
+    client.disconnect()
 
     # Get scrape selection
     scraped = config.get('SCRAPED')
@@ -27,31 +66,31 @@ def tag_def(update, context):
         for item in scraped.keys():
             markupk[item] = f'{item}\'s followers ({len(scraped[item])})'
 
-    markupk[InteractStates.SCRAPEACCOUNT] = 'Scrape another user'
+    markupk[TagStates.SCRAPEACCOUNT] = 'Scrape another user'
     markupk[Callbacks.CANCEL] = 'Cancel'
     markup = CreateMarkup(markupk, cols=2).create_markup()
 
     # Send message and update ConversationHandler
-    message = send_message(update, context, select_scrape_text, markup)
-    return InteractStates.SCRAPE
+    message = send_message(update, context, select_tag_scrape_text, markup)
+    return TagStates.SCRAPE
+
 
 
 def select_tag_scrape(update, context):
-    if not check_auth(update, context):
+    session:InteractSession = InteractSession.deserialize(InteractSession.TAG, update)
+    if not session:
         return
-
-    session = InteractSession(update.effective_user.id)
+        
     data = update.callback_query.data
     update.callback_query.answer()
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
 
-    if data == str(InteractStates.SCRAPEACCOUNT):
+    if data == str(TagStates.SCRAPEACCOUNT):
         send_message(update, context, select_account_text, markup)
-        return InteractStates.SCRAPEACCOUNT
+        return TagStates.SCRAPEACCOUNT
 
     elif data == Callbacks.CANCEL:
-        return cancel_send_dm(update, context)
-
+        return cancel_tag(update, context)
 
     session.set_target(data)
     session.set_interaction(Interaction(data))
@@ -66,11 +105,11 @@ def select_tag_scrape(update, context):
     markupk[Callbacks.CANCEL] = 'Cancel'
     markup = CreateMarkup(markupk, cols=2).create_markup()
     send_message(update, context, select_count_text, markup)
-    return InteractStates.COUNT
+    return TagStates.COUNT
 
 
 def select_tag_scrape_account(update, context):
-    session = InteractSession.deserialize(InteractSession.INTERACT, update)
+    session = InteractSession.deserialize(InteractSession.TAG, update)
     if not session: 
         return
 
@@ -88,7 +127,7 @@ def select_tag_scrape_account(update, context):
         client.disconnect()
         markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'})
         send_message(update, context, incorrect_user_text.format(str(username)))
-        return InteractStates.SCRAPEACCOUNT
+        return TagStates.SCRAPEACCOUNT
 
     session.set_target(username)
     session.set_interaction(Interaction(username))
@@ -104,19 +143,18 @@ def select_tag_scrape_account(update, context):
         Callbacks.CANCEL: 'Cancel'
     }, cols=2).create_markup()
     send_message(update, context, select_count_text, markup)
-    return InteractStates.COUNT
+    return TagStates.COUNT
 
 
 def select_tag_count(update, context):
-    session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
+    session:InteractSession = InteractSession.deserialize(InteractSession.TAG, update)
     if not session: 
         return
     
-
     data = update.callback_query.data
     update.callback_query.answer()
     if data == Callbacks.CANCEL:
-        return cancel_send_dm(update, context, session)
+        return cancel_tag(update, context, session)
 
     session.set_count(int(data))
     scraped = list()
@@ -125,30 +163,27 @@ def select_tag_count(update, context):
             break
         scraped.append(user)
     session.set_scraped(scraped)
-    markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
-    send_message(update, context, input_message_text, markup)
-    return InteractStates.INPUTACCOUNTS
+
+    markup = CreateMarkup({f'{Callbacks.TAGSKIP}:{InteractStates.CONFIRM}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
+    send_message(update, context, input_accounts_text, markup)
+    return TagStates.INPUTACCOUNTS
 
 
-def skip(update, context):
-    session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
+def tag_skip(update, context):
+    session:InteractSession = InteractSession.deserialize(InteractSession.TAG, update)
     if not session: 
         return
 
     data = update.callback_query.data
     print(f'Skipping: {data}')
-    if str(InteractStates.INPUTPROXIES) in data:
-        markup = CreateMarkup({Callbacks.SKIP: 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
-        send_message(update, context, input_proxies_text, markup)
-        return InteractStates.INPUTPROXIES
-    else:
-        markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
-        send_message(update, context, confirm_dms_text.format(session.count), markup)
-        return InteractStates.CONFIRM
+
+    markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
+    send_message(update, context, confirm_dms_text.format(session.count), markup)
+    return TagStates.CONFIRM
     
 
 def input_tag_accounts(update:Update, context:CallbackContext):
-    session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
+    session:InteractSession = InteractSession.deserialize(InteractSession.TAG, update)
     if not session: 
         return
     
@@ -165,13 +200,13 @@ def input_tag_accounts(update:Update, context:CallbackContext):
 
         session.set_accounts(accounts)
     
-    markup = CreateMarkup({f'{Callbacks.SKIP}:{InteractStates.CONFIRM}': 'Skip', Callbacks.CANCEL: 'Cancel'}).create_markup()
-    send_message(update, context, input_proxies_text, markup)
-    return InteractStates.CONFIRM
+    markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
+    send_message(update, context, confirm_tags_text.format(session.count), markup)
+    return TagStates.CONFIRM
 
 
 def confirm_tags(update, context):
-    session = InteractSession.deserialize(InteractSession.INTERACT, update)
+    session = InteractSession.deserialize(InteractSession.TAG, update)
     if not session: 
         return
 
@@ -179,17 +214,17 @@ def confirm_tags(update, context):
     update.callback_query.answer()
     if data == Callbacks.CONFIRM:
         markup = CreateMarkup({Callbacks.HELP: 'Command List'}).create_markup()
-        send_message(update, context, enqueued_dms_text, markup)
-        instagram.enqueue_dm_process(session)
+        send_message(update, context, enqueued_tags_text, markup)
+        instagram.enqueue_tag_process(session)
         session.discard()
         return ConversationHandler.END
     else:
-        return cancel_send_dm(update, context, session)
+        return cancel_tag(update, context, session)
 
 
 def cancel_tag(update, context, session:InteractSession=None):
     if not session:
-        session = InteractSession.deserialize(Persistence.INTERACT, update)
+        session = InteractSession.deserialize(Persistence.TAG, update)
         if not session:
             return
 
