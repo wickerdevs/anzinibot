@@ -1,4 +1,6 @@
-from instaclient.errors.common import PrivateAccountError
+from instaclient.errors.common import PrivateAccountError, NotLoggedInError, InvalidUserError
+from instaclient.instagram.profile import Profile
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException    
 from anzinibot.models.interaction import Interaction
 from anzinibot.bot.commands import *
 
@@ -118,31 +120,46 @@ def select_tag_scrape_account(update, context):
 
     send_message(update, context, checking_user_vadility_text)
     client = instagram.init_client()
+    profile = None
+    count=750
     try:
-        profile = client.get_profile(username)
+        send_message(update, context, "Getting profile info...")
+        try:
+            profile = client.get_profile(username)
+        except NotLoggedInError:
+            send_message(update, context, logging_in_text)
+            client.login(session.username, session.password)
+            profile = client.get_profile(username)
+
+        if not profile:
+            raise InvalidUserError(username)
         if profile.is_private:
             raise PrivateAccountError(profile.username)
-        client.disconnect()
-    except:
+
+        count = profile.follower_count
+    except (NotLoggedInError, TimeoutException, NoSuchElementException):
+        telelogger.debug("Error checking instagram")
+        pass
+    except InvalidUserError:
         client.disconnect()
         markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'})
         send_message(update, context, incorrect_user_text.format(str(username)))
         return TagStates.SCRAPEACCOUNT
-
+    except:
+        telelogger.debug(f"An error as occured. Ignoring. Username: {username}")
+        pass
+    client.disconnect()
+    counts = [5, 25, 50, 100, 250, 400, 500, count]
+    markupk = dict()
+    for item in counts:
+        if count >= item:
+            markupk[item] = str(item)
+    markupk[Callbacks.CANCEL] = 'Cancel'
+    markup = CreateMarkup(markupk, cols=2).create_markup()
+        
     session.set_target(username)
     session.set_interaction(Interaction(username))
-    markup = CreateMarkup({
-        5: '5',
-        25: '25',
-        50: '50',
-        100: '100',
-        250: '250',
-        400: '400',
-        500: '500',
-        profile.follower_count: f'All ({profile.follower_count})',
-        Callbacks.CANCEL: 'Cancel'
-    }, cols=2).create_markup()
-    send_message(update, context, select_count_text, markup)
+    send_message(update, context, select_tag_count_text, markup)
     return TagStates.COUNT
 
 
@@ -178,7 +195,7 @@ def tag_skip(update, context):
     print(f'Skipping: {data}')
 
     markup = CreateMarkup({Callbacks.CONFIRM: 'Confirm', Callbacks.CANCEL: 'Cancel'}).create_markup()
-    send_message(update, context, confirm_dms_text.format(session.count), markup)
+    send_message(update, context, confirm_tags_text.format(session.count), markup)
     return TagStates.CONFIRM
     
 

@@ -91,6 +91,7 @@ error_getting_post_text = 'There was an error loading the post with shortcode <b
 select_account_text = 'Insert below the username of the account you want to scrape:'
 error_when_checking_account = 'There was an error when checking {}\'s vadility... The account might be inexistent or private. Please choose another account:'
 select_count_text = 'Select below the amount of users you would like to send your message to:'
+select_tag_count_text = 'Select below the amount of users you would like to tag under your post:'
 launching_operation_text = 'Starting operation...'
 scrape_followers_callback_text = 'Scraped {} followers...'
 follow_cancelled_text  = 'The request cancelled.'
@@ -104,7 +105,7 @@ cancelled_editing_settings = 'Settings have not been altered.'
 
 
 # GENERAL
-incorrect_command_text = 'The command or message you sent is not a recognized command. Try /help for more information.'
+incorrect_command_text = 'The command or message \'{}\' is not a recognized command...'
 # MULTIPLE UTILITIES
 error_checking_connection = 'There was a problem in authenticating the client. Please try again or contact @davidwickerhf.'
 incorrect_credentials_error = 'When sending the messages the client wasn\'t able to log into the account due to incorrect credentials... Please check and edit your credentials with /instagram\n{} Send DM requests completed so far.'

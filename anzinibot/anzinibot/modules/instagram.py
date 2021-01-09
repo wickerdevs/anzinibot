@@ -1,8 +1,10 @@
 import queue
+
+from instaclient.client.constants import ClientUrls
 from anzinibot.models.worker import TaskQueue
 from anzinibot.models.pinnedmsg import PinnedMessage
 from functools import wraps
-from random import randrange
+from random import randint, randrange
 from telegram import update
 from telegram.parsemode import ParseMode
 from anzinibot.models.interaction import Interaction
@@ -12,7 +14,7 @@ from anzinibot.models.interactsession import InteractSession
 from anzinibot.modules import config
 from anzinibot.texts import *
 from typing import List, Optional, Tuple, final
-from anzinibot import CONFIG_DIR, CONFIG_FOLDER
+from anzinibot import CHROMEDRIVER_DIR, CONFIG_DIR, CONFIG_FOLDER
 from instaclient.client.instaclient import InstaClient
 from instaclient.errors.common import FollowRequestSentError, InvaildPasswordError, InvalidUserError, PrivateAccountError, SuspisciousLoginAttemptError, VerificationCodeNecessary
 from instaclient.instagram.post import Post
@@ -89,7 +91,7 @@ def update_message(obj: InteractSession, text:str, final:bool=False):
 
 def init_client():
     if os.environ.get('PORT') in (None, ""):
-        client = InstaClient(driver_path=f'{CONFIG_FOLDER}chromedriver.exe', debug=True, logger=instalogger, localhost_headless=True)
+        client = InstaClient(driver_path=f'{CHROMEDRIVER_DIR}', debug=True, logger=instalogger, localhost_headless=LOCALHEADLESS)
     else:
         client = InstaClient(host_type=InstaClient.WEB_SERVER, debug=True, logger=instalogger, localhost_headless=LOCALHEADLESS)
     return client
@@ -218,7 +220,21 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
             if len(session.get_scraped()) > 15:
                 text = inform_messages_status_text.format(len(session.get_scraped()), len(session.get_messaged())) + f'\nWaiting a bit...'
                 update_message(session, text)
-                time.sleep(randrange(60, 180))
+                action = randint(1, 2)
+                scrolls = randrange(1, 9)
+                interval = randrange(1, 4)
+                if action is 1:
+                    client.driver.get(ClientUrls.HOME_URL)
+                    for scroll in range(scrolls):
+                        client.scroll(interval=interval)
+                else:
+                    client.driver.get('https://www.instagram.com/explore/')
+                    for scroll in range(scrolls):
+                        client.scroll(interval=interval)
+
+                try:
+                    client.driver.get()
+                time.sleep(randrange(60, 135))
 
     client.disconnect()
     return (True, session)

@@ -1,13 +1,15 @@
 from anzinibot.models.callbacks import Callbacks
 from anzinibot.bot.commands import *
 from anzinibot import *
+from telegram import ReplyKeyboardMarkup, KeyboardButton
 
 class CreateMarkup():
     """
     Class describing a Reply Markup Menu.
     """
-    def __init__(self, items, cols=1):
+    def __init__(self, items, cols=1, inline=True):
         self.items = items
+        self.inline = inline
         self.titles = list(items.values())
         self.callbacks = list(items.keys())
         self.cols = cols
@@ -38,7 +40,11 @@ class CreateMarkup():
         index = 0
         row = []
         for title in self.titles:
-            keyboard_button = InlineKeyboardButton(
+            if not self.inline:
+                keyboard_button = KeyboardButton(
+                title, callback_data=self.callbacks[index])
+            else:
+                keyboard_button = InlineKeyboardButton(
                 title, callback_data=self.callbacks[index])
             if len(row) < self.cols:
                 row.append(keyboard_button)
@@ -52,7 +58,9 @@ class CreateMarkup():
         return keyboard
 
     def create_markup(self):
-        return InlineKeyboardMarkup(self.keyboard)
+        if self.inline:
+            return InlineKeyboardMarkup(self.keyboard)
+        return ReplyKeyboardMarkup(self.keyboard)
 
 
 class MarkupDivider(CreateMarkup):

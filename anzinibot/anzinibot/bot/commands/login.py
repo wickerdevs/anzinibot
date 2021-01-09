@@ -28,27 +28,20 @@ def instagram_username(update, context):
     instasession:InstaSession = InstaSession.deserialize(Persistence.INSTASESSION, update)
     if not instasession:
         return InstaStates.INPUT_USERNAME
-    
-    username = update.message.text 
+
+    username = update.message.text
     message = send_message(update, context, checking_user_vadility_text)
     instasession.set_message(message.message_id)
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
-    # Verify User
+
     try:
-        instaclient = instagram.init_client()
-        profile = instaclient.get_profile(username, context=False)
-        if isinstance(profile, Profile):
-            applogger.debug('USER {} IS VALID'.format(username))
-        else:
-            send_message(update, context, invalid_user_text.format(username), markup)
-            instasession.set_message(message.message_id)
+        profile = client.get_profile(username)
+        if not profile:
+            send_message(update, context, incorrect_user_text, markup)
             return InstaStates.INPUT_USERNAME
-    except InvalidUserError as error:
-        send_message(update, context, invalid_user_text.format(error.username), markup)
-        instasession.set_message(message.message_id)
-        return InstaStates.INPUT_USERNAME
-    except (PrivateAccountError, NotLoggedInError) as error:
+    except NotLoggedInError:
         pass
+    
     instasession.set_username(username)
     # Request Password
     send_message(update, context, input_password_text, markup)

@@ -1,4 +1,5 @@
-from instaclient.errors.common import PrivateAccountError
+from instaclient.errors.common import NotLoggedInError, PrivateAccountError, InvalidUserError
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException     
 from anzinibot.models.interaction import Interaction
 from anzinibot.bot.commands import *
 
@@ -74,39 +75,54 @@ def select_scrape(update, context):
 
 
 def select_scrape_account(update, context):
-    session = InteractSession.deserialize(InteractSession.INTERACT, update)
+    session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
     if not session: 
         return
 
     username = update.message.text
     update.message.delete()
+    session.get_creds()
 
     send_message(update, context, checking_user_vadility_text)
     client = instagram.init_client()
+    profile = None
+    count = 750
     try:
-        profile = client.get_profile(username)
+        send_message(update, context, "Getting profile info...")
+        try:
+            profile = client.get_profile(username)
+        except NotLoggedInError:
+            send_message(update, context, logging_in_text)
+            client.login(session.username, session.password)
+            profile = client.get_profile(username)
+
+        if not profile:
+            raise InvalidUserError(username)
         if profile.is_private:
             raise PrivateAccountError(profile.username)
+        
+        count = profile.follower_count
         client.disconnect()
-    except:
+    except InvalidUserError:
         client.disconnect()
         markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'})
         send_message(update, context, incorrect_user_text.format(str(username)))
         return InteractStates.SCRAPEACCOUNT
+    except (NoSuchElementException, TimeoutException):
+        telelogger.debug(f"Error connectin to IG. Ignoring. Username: {username}")
+    except:
+        telelogger.debug(f"Error with request. Ignoring. Username: {username}")
 
+    
     session.set_target(username)
     session.set_interaction(Interaction(username))
-    markup = CreateMarkup({
-        5: '5',
-        25: '25',
-        50: '50',
-        100: '100',
-        250: '250',
-        400: '400',
-        500: '500',
-        profile.follower_count: f'All ({profile.follower_count})',
-        Callbacks.CANCEL: 'Cancel'
-    }, cols=2).create_markup()
+    counts = [5, 25, 50, 100, 250, 400, 500, count]
+    markupk = dict()
+    for item in counts:
+        if count >= item:
+            markupk[item] = str(item)
+    markupk[Callbacks.CANCEL] = 'Cancel'
+    markup = CreateMarkup(markupk, cols=2).create_markup()
     send_message(update, context, select_count_text, markup)
     return InteractStates.COUNT
 
