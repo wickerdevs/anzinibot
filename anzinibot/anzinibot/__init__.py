@@ -2,7 +2,7 @@ PERSISTENCE_DIR = 'config/'
 CONFIG_DIR = 'config/config.json'
 CONFIG_FOLDER = 'config/'
 CHROMEDRIVER_DIR = 'config/chromedriver'
-LOCALHEADLESS = False
+LOCALHEADLESS = True
 
 import os, logging
 from telegram.ext.updater import Updater
