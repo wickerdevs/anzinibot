@@ -6,4 +6,4 @@ Instagram bot able to:
 
 The bot can be controlled via a Telegram Bot.
 
-Get your own instagram bot here: https://fiverr.com/davidwickerhf/
+Get your own instagram bot [here](https://www.fiverr.com/davidwicker_hf/program-an-instagram-bot-for-you)
