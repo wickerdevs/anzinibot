@@ -106,6 +106,7 @@ cancelled_editing_settings = 'Settings have not been altered.'
 
 # GENERAL
 incorrect_command_text = 'The command or message \'{}\' is not a recognized command...'
+invalid_text_text = 'Please make sure the message does not contain special characters (such emojis), and try again'
 # MULTIPLE UTILITIES
 error_checking_connection = 'There was a problem in authenticating the client. Please try again or contact @davidwickerhf.'
 incorrect_credentials_error = 'When sending the messages the client wasn\'t able to log into the account due to incorrect credentials... Please check and edit your credentials with /instagram\n{} Send DM requests completed so far.'

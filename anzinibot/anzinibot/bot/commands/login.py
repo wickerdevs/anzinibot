@@ -30,6 +30,9 @@ def instagram_username(update, context):
         return InstaStates.INPUT_USERNAME
 
     username = update.message.text
+    if check_invalid_text(update, context, username):
+        return
+
     message = send_message(update, context, checking_user_vadility_text)
     instasession.set_message(message.message_id)
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
@@ -57,6 +60,9 @@ def instagram_password(update, context):
 
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
     password = update.message.text
+    if check_invalid_text(update, context, password):
+        return
+        
     instasession.set_password(password)
     message = send_message(update, context, attempting_login_text)
     instasession.set_message(message.message_id)

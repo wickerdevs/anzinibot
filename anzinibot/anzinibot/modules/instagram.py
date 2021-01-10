@@ -1,11 +1,8 @@
-import queue
-
 from instaclient.client.constants import ClientUrls
 from anzinibot.models.worker import TaskQueue
 from anzinibot.models.pinnedmsg import PinnedMessage
 from functools import wraps
 from random import randint, randrange
-from telegram import update
 from telegram.parsemode import ParseMode
 from anzinibot.models.interaction import Interaction
 from anzinibot.models.settings import Settings
@@ -13,7 +10,7 @@ from anzinibot.models.setting import Setting
 from anzinibot.models.interactsession import InteractSession
 from anzinibot.modules import config
 from anzinibot.texts import *
-from typing import List, Optional, Tuple, final
+from typing import List, Optional, Tuple
 from anzinibot import CHROMEDRIVER_DIR, CONFIG_DIR, CONFIG_FOLDER
 from instaclient.client.instaclient import InstaClient
 from instaclient.errors.common import FollowRequestSentError, InvaildPasswordError, InvalidUserError, PrivateAccountError, SuspisciousLoginAttemptError, VerificationCodeNecessary
@@ -217,10 +214,10 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
         except Exception as error:
             applogger.error(f'Error in sending message to <{follower}>', exc_info=error)
         finally:
-            if len(session.get_scraped()) > 15:
+            if len(session.get_scraped()) > 5:
                 text = inform_messages_status_text.format(len(session.get_scraped()), len(session.get_messaged())) + f'\nWaiting a bit...'
                 update_message(session, text)
-                action = randint(1, 2)
+                action = randint(1, 3)
                 scrolls = randrange(1, 9)
                 interval = randrange(1, 4)
                 if action is 1:
@@ -232,8 +229,6 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
                     for scroll in range(scrolls):
                         client.scroll(interval=interval)
 
-                try:
-                    client.driver.get()
                 time.sleep(randrange(60, 135))
 
     client.disconnect()
@@ -361,7 +356,18 @@ def tag_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[boo
             if len(session.get_scraped()) > 15:
                 text = inform_tags_status_text.format(len(session.get_scraped()), url, len(session.get_tagged())) + f'\nWaiting a bit...'
                 update_message(session, text)
-                time.sleep(randrange(5, 25))
+                action = randint(1, 3)
+                scrolls = randrange(1, 3)
+                interval = randrange(1, 3)
+                if action is 1:
+                    client.driver.get(ClientUrls.HOME_URL)
+                    for scroll in range(scrolls):
+                        client.scroll(interval=interval)
+                else:
+                    client.driver.get('https://www.instagram.com/explore/')
+                    for scroll in range(scrolls):
+                        client.scroll(interval=interval)
+                time.sleep(randrange(5, 15))
 
     client.disconnect()
     return (True, session)

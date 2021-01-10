@@ -1,3 +1,5 @@
+import re
+import time
 from anzinibot.modules import config
 from anzinibot.bot import *
 from anzinibot.texts import *
@@ -63,6 +65,16 @@ def send_message(update:Update, context:CallbackContext, message:str, markup=Non
 
     config.set_message(update.effective_user.id, message.message_id)
     return message
+
+
+def check_invalid_text(update, context, text):
+    occurences = re.findall(r'(//u[0-9A-Fa-f]+)', text)
+    if occurences:
+        message = context.bot.send_message(chat_id=update.effective_chat.id, text=invalid_text_text, parse_mode=ParseMode.HTML)
+        if update.message:
+            update.message.delete()
+        time.sleep(1.6)
+        message.delete()
 
 
 def check_auth(update, context):

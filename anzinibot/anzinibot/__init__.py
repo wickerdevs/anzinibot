@@ -9,7 +9,6 @@ from telegram.ext.updater import Updater
 from telegram.ext.defaults import Defaults
 from telegram.utils.request import Request
 from anzinibot.models.mq_bot import MQBot
-import telegram
 from telegram import ParseMode
 from telegram.ext import messagequeue as mq
 

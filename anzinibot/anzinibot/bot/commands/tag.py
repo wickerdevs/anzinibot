@@ -133,16 +133,16 @@ def select_tag_scrape_account(update, context):
 
         if not profile:
             raise InvalidUserError(username)
-        if profile.is_private:
+        if profile.is_private and not profile.mutual_followed:
             raise PrivateAccountError(profile.username)
 
         count = profile.follower_count
     except (NotLoggedInError, TimeoutException, NoSuchElementException):
         telelogger.debug("Error checking instagram")
         pass
-    except InvalidUserError:
+    except (InvalidUserError, PrivateAccountError):
         client.disconnect()
-        markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'})
+        markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
         send_message(update, context, incorrect_user_text.format(str(username)))
         return TagStates.SCRAPEACCOUNT
     except:

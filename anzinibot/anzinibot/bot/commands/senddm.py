@@ -2,7 +2,7 @@ from instaclient.errors.common import NotLoggedInError, PrivateAccountError, Inv
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException     
 from anzinibot.models.interaction import Interaction
 from anzinibot.bot.commands import *
-
+import re
 
 
 def senddm_def(update, context):
@@ -98,14 +98,14 @@ def select_scrape_account(update, context):
 
         if not profile:
             raise InvalidUserError(username)
-        if profile.is_private:
+        if profile.is_private and not profile.mutual_followed:
             raise PrivateAccountError(profile.username)
         
         count = profile.follower_count
         client.disconnect()
-    except InvalidUserError:
+    except (InvalidUserError, PrivateAccountError):
         client.disconnect()
-        markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'})
+        markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
         send_message(update, context, incorrect_user_text.format(str(username)))
         return InteractStates.SCRAPEACCOUNT
     except (NoSuchElementException, TimeoutException):
@@ -156,7 +156,9 @@ def input_message(update, context):
         return
 
     text = update.message.text
-    text = text.replace('\\u', '')
+    if check_invalid_text(update, context, text):
+        return
+    
     session.set_text(text)
     update.message.delete()
 

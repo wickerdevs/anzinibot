@@ -2,7 +2,6 @@ from logging import Filter
 
 from telegram import update
 from anzinibot import telelogger
-from anzinibot.bot.commands.cancel import *
 from anzinibot.bot.commands.login import *
 from anzinibot.bot.commands.help import *
 from anzinibot.bot.commands.logout import *
@@ -63,7 +62,6 @@ def setup(updater):
     # Commands
     dp.add_handler(CommandHandler('start', start_def))
     dp.add_handler(CommandHandler("help", help_def, run_async=True))
-    dp.add_handler(CommandHandler('cancel', cancel_def))
     # Check / Switch account 
     dp.add_handler(CommandHandler('account', check_account,  run_async=True))
     dp.add_handler(CallbackQueryHandler(check_account, pattern=Callbacks.ACCOUNT))
