@@ -1,7 +1,7 @@
 PERSISTENCE_DIR = 'config/'
 CONFIG_DIR = 'config/config.json'
 CONFIG_FOLDER = 'config/'
-CHROMEDRIVER_DIR = 'config/chromedriver.exe'
+CHROMEDRIVER_DIR = 'config/chromedriver'
 LOCALHEADLESS = False
 
 import os, logging
