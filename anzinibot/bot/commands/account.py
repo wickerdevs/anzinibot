@@ -19,11 +19,11 @@ def check_account(update, context):
             markup = CreateMarkup({Callbacks.LOGIN: 'Log In'}).create_markup()
             instasession.discard()
             message = send_message(update, context, no_connection, markup)
-    except:
+    except Exception as error:
         # Error
+        telelogger.exception("Error checking account connection", exc_info=error)
         instasession.discard()
         message = send_message(update, context, problem_connecting)
-        context.bot.report_error('Error in Checking Instagram Connection')
         
 
 def switch_account(update, context):

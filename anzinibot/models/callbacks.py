@@ -52,10 +52,11 @@ class ScrapeStates:
 class InteractStates:
     SCRAPE = 1
     SCRAPEACCOUNT = 2
-    COUNT = 3
-    INPUTACCOUNTS = 7
-    MESSAGE = 4
-    CONFIRM = 5
+    POST_URL = 3
+    COUNT = 4
+    INPUTACCOUNTS = 5
+    MESSAGE = 6
+    CONFIRM = 7
 
 
 class TagStates:

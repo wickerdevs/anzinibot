@@ -38,14 +38,17 @@ def instagram_username(update, context):
     instasession.set_message(message.message_id)
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
 
+    client = instagram.init_client()
     try:
         profile = client.get_profile(username)
         if not profile:
             send_message(update, context, incorrect_user_text, markup)
             return InstaStates.INPUT_USERNAME
     except NotLoggedInError:
+        client.disconnect()
         pass
-    
+
+    client.disconnect()
     instasession.set_username(username)
     # Request Password
     send_message(update, context, input_password_text, markup)
@@ -76,6 +79,7 @@ def instagram_password(update, context):
     instaclient = instagram.init_client()
     try:
         instaclient.login(instasession.username, instasession.password)
+        instasession.set_cookies(instaclient.session_cookies)
     except InvalidUserError as error:
         send_message(update, context, invalid_user_text.format(error.username), markup)
         instasession.set_message(message.message_id)
@@ -94,10 +98,7 @@ def instagram_password(update, context):
 
     except SuspisciousLoginAttemptError as error:
         # Creds are correct
-        instaclient.driver.save_screenshot('suspicious_login_attempt.png')
-        context.bot.report_error(error, send_screenshot=True, screenshot_name='suspicious_login_attempt')
-        if os.path.exists("suspicious_login_attempt.png"):
-            os.remove("suspicious_login_attempt.png")
+        telelogger.warning('Suspicious Login Attempt! Code Sent')
         instasession.increment_code_request()
         if error.mode == SuspisciousLoginAttemptError.PHONE:
             text = input_security_code_text

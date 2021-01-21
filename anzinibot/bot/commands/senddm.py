@@ -1,4 +1,5 @@
 from instaclient.errors.common import NotLoggedInError, PrivateAccountError, InvalidUserError
+from instaclient.errors.navigator import InvalidShortCodeError
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException     
 from anzinibot.models.interaction import Interaction
 from anzinibot.bot.commands import *
@@ -63,15 +64,10 @@ def select_scrape(update, context):
     scraped = config.get_scraped(data)
     session.set_scraped(scraped)
 
-    counts = [5, 25, 50, 100, 250, 400, 500, len(scraped)]
-    markupk = dict()
-    for count in counts:
-        if len(scraped) >= count:
-            markupk[count] = str(count)
-    markupk[Callbacks.CANCEL] = 'Cancel'
-    markup = CreateMarkup(markupk, cols=2).create_markup()
-    send_message(update, context, select_count_text, markup)
-    return InteractStates.COUNT
+    markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
+    message = send_message(update, context, input_dm_post_url_text, markup)
+    session.set_message(message.message_id)
+    return InteractStates.POST_URL
 
 
 def select_scrape_account(update, context):
@@ -85,6 +81,7 @@ def select_scrape_account(update, context):
 
     send_message(update, context, checking_user_vadility_text)
     client = instagram.init_client()
+    client.set_session_cookies(session.cookies)
     profile = None
     count = 750
     try:
@@ -98,7 +95,7 @@ def select_scrape_account(update, context):
 
         if not profile:
             raise InvalidUserError(username)
-        if profile.is_private and not profile.mutual_followed:
+        if profile.is_private:
             raise PrivateAccountError(profile.username)
         
         count = profile.follower_count
@@ -113,9 +110,54 @@ def select_scrape_account(update, context):
     except:
         telelogger.debug(f"Error with request. Ignoring. Username: {username}")
 
+    markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
+    message = send_message(update, context, input_dm_post_url_text, markup)
+    session.set_message(message.message_id)
+    return InteractStates.POST_URL
+
+
+def input_dm_post_url(update, context):
+    print('Input Post')
+    session:InteractSession = InteractSession.deserialize(InteractSession.INTERACT, update)
+    if not session:
+        return
+
+    # https://www.instagram.com/p/CIqua7YHtha/
     
-    session.set_target(username)
-    session.set_interaction(Interaction(username))
+    url:str = update.message.text
+    telelogger.warn(f'Url: {url}')
+
+    send_message(update, context, checking_post_text)
+    session.get_creds()
+    client = instagram.init_client()
+    client.set_session_cookies(session.cookies)
+    try:
+        shortcode = url.replace('https://www.instagram.com/p/', '')
+        telelogger.warn(f'Url: {shortcode}')
+        shortcode = shortcode.replace('/', '')
+        telelogger.warn(f'Url: {shortcode}')
+        post = client.get_post(shortcode)
+        if not post:
+            raise InvalidShortCodeError(shortcode)
+        session.set_post(shortcode)
+    except Exception as error:
+        client.disconnect()
+        telelogger.warning(f'The url <{url}> is invalid.', exc_info=error)
+        markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
+        send_message(update, context, invalid_post_url_text, markup)
+        return InteractStates.POST_URL
+
+    profile = client.get_profile(session.target)
+    client.disconnect()
+
+    # Get scrape selection
+    scraped = session.get_scraped()
+    if scraped:
+        count = len(scraped)
+    elif profile.follower_count > 10000:
+        count = 10000
+    else:
+        count = profile.follower_count
     counts = [5, 25, 50, 100, 250, 400, 500, count]
     markupk = dict()
     for item in counts:

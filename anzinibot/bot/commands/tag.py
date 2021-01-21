@@ -1,4 +1,5 @@
 from instaclient.errors.common import PrivateAccountError, NotLoggedInError, InvalidUserError
+from instaclient.errors.navigator import InvalidShortCodeError
 from instaclient.instagram.profile import Profile
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException    
 from anzinibot.models.interaction import Interaction
@@ -41,13 +42,17 @@ def input_post_url(update, context):
     telelogger.warn(f'Url: {url}')
 
     send_message(update, context, checking_post_text)
+    session.get_creds()
     client = instagram.init_client()
+    client.set_session_cookies(session.cookies)
     try:
         shortcode = url.replace('https://www.instagram.com/p/', '')
         telelogger.warn(f'Url: {shortcode}')
         shortcode = shortcode.replace('/', '')
         telelogger.warn(f'Url: {shortcode}')
         post = client.get_post(shortcode, context=False)
+        if not post:
+            raise InvalidShortCodeError(shortcode)
         session.set_post(shortcode)
     except Exception as error:
         client.disconnect()
@@ -99,10 +104,11 @@ def select_tag_scrape(update, context):
     scraped = config.get_scraped(data)
     session.set_scraped(scraped)
 
-    counts = [5, 25, 50, 100, 250, 400, 500, len(scraped)]
+    scraped_count = len(scraped) if len(scraped) <= 10000 else 10000
+    counts = [5, 25, 50, 100, 250, 400, 500, scraped_count]
     markupk = dict()
     for count in counts:
-        if len(scraped) >= count:
+        if scraped_count >= count:
             markupk[count] = str(count)
     markupk[Callbacks.CANCEL] = 'Cancel'
     markup = CreateMarkup(markupk, cols=2).create_markup()
@@ -111,7 +117,7 @@ def select_tag_scrape(update, context):
 
 
 def select_tag_scrape_account(update, context):
-    session = InteractSession.deserialize(InteractSession.TAG, update)
+    session:InteractSession = InteractSession.deserialize(InteractSession.TAG, update)
     if not session: 
         return
 
@@ -119,9 +125,11 @@ def select_tag_scrape_account(update, context):
     update.message.delete()
 
     send_message(update, context, checking_user_vadility_text)
+    session.get_creds()
     client = instagram.init_client()
+    client.set_session_cookies(session.cookies)
     profile = None
-    count=750
+    count=10000
     try:
         send_message(update, context, "Getting profile info...")
         try:
@@ -149,10 +157,12 @@ def select_tag_scrape_account(update, context):
         telelogger.debug(f"An error as occured. Ignoring. Username: {username}")
         pass
     client.disconnect()
-    counts = [5, 25, 50, 100, 250, 400, 500, count]
+
+    scraped_count = count if count <= 10000 else 10000
+    counts = [5, 25, 50, 100, 250, 400, 500, scraped_count]
     markupk = dict()
     for item in counts:
-        if count >= item:
+        if scraped_count >= item:
             markupk[item] = str(item)
     markupk[Callbacks.CANCEL] = 'Cancel'
     markup = CreateMarkup(markupk, cols=2).create_markup()

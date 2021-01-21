@@ -9,6 +9,7 @@ class InstaSession(Persistence):
         super().__init__(method, user_id, message_id=None)
         self.username = None
         self.password = None
+        self.cookies = None
         self.security_code = None
         self.code_request = 0
 
@@ -19,6 +20,10 @@ class InstaSession(Persistence):
     @persistence_decorator
     def set_password(self, password):
         self.password = password
+
+    @persistence_decorator
+    def set_cookies(self, cookies):
+        self.cookies = cookies
 
     @persistence_decorator
     def set_scode(self, scode):
@@ -49,7 +54,7 @@ class InstaSession(Persistence):
         # Localhost
         if not creds:
             creds = dict()
-        creds[self.username] = self.password
+        creds[self.username] = {'password': self.password, 'cookies': self.cookies}
         config.set('instacreds:{}'.format(self.user_id), creds)
 
     def get_creds(self):
@@ -62,7 +67,11 @@ class InstaSession(Persistence):
             self.set_username(session if isinstance(session, str) else list(creds.keys())[0])
 
             if creds.get(self.username):
-                self.set_password(creds.get(self.username))
+                self.set_password(creds.get(self.username)['password'])
+                try:
+                    self.set_cookies(creds.get(self.username)['cookies'])
+                except:
+                    pass
                 return True
             else:
                 return False
@@ -78,13 +87,14 @@ class InstaSession(Persistence):
         config.set('instacreds:{}'.format(self.user_id), creds)
 
         newsession = None
-        for key in list(creds.keys()):
-            if key != session:
-                
-                newsession = key
-                self.set_session(key)
-                self.set_username(key)
-                break
+        if creds:
+            for key in list(creds.keys()):
+                if key != session:
+                    
+                    newsession = key
+                    self.set_session(key)
+                    self.set_username(key)
+                    break
         applogger.debug(f'Set session: {newsession}')
 
         if not newsession:

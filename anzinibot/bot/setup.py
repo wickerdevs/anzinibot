@@ -37,6 +37,7 @@ def setup(updater):
         states={
             InteractStates.SCRAPE: [CallbackQueryHandler(select_scrape)],
             InteractStates.SCRAPEACCOUNT: [MessageHandler(Filters.text, select_scrape_account)],
+            InteractStates.POST_URL: [MessageHandler(Filters.text, input_dm_post_url)],
             InteractStates.COUNT: [CallbackQueryHandler(select_count)],
             InteractStates.MESSAGE: [MessageHandler(Filters.text, input_message)],
             InteractStates.INPUTACCOUNTS: [MessageHandler(Filters.document, input_accounts)],

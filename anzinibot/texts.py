@@ -64,6 +64,7 @@ error_loggingout_text = 'There was an error when trying to log out of instagram.
 dm_queue_full_text = 'A DM task is already running. Please wait for that task to finish first, before launching another.'
 select_scrape_text = 'Select below the selection of users to send your DM to:'
 incorrect_user_text = 'The username <b>{}</b> is invalid. Please try again with another instagram username:'
+input_dm_post_url_text = 'Input below the url link of the post you would like to forward together with your message, as follows: \n<code>https://www.instagram.com/p/CJF4VjYHFAj/</code> (You can skip this step)'
 input_message_text = 'Input below the message you would like me to send. (Try avoiding emojis or special characters as they might not get recognized by instagram)'
 input_accounts_text = 'Send below a text file containing a list of credentials of the accounts the bot should use for this operation:'
 confirm_dms_text = 'Are you sure you want to send your message to {} users?'
@@ -76,7 +77,7 @@ inform_messages_status_text = 'Sending messages to {} users... {} sent so far...
 # TAG CONVERSATION
 tag_queue_full_text = 'A Tag task is already running. Please wait for that task to finish first, before launching another.'
 select_tag_scrape_text = 'Select below the selection of users to tag under your post:'
-input_post_url_text = 'Input below the url link of the target post below, as follows: \n<code>https://www.instagram.com/p/CIqua7YHtha/</code>:'
+input_post_url_text = 'Input below the url link of the target post below, as follows: \n<code>https://www.instagram.com/p/CJF4VjYHFAj/</code>:'
 checking_post_text = 'Checking post url...'
 invalid_post_url_text = 'The url you entered is not valid. Please try again: '
 confirm_tags_text = 'Are you sure you want to tag {} users under your post?'

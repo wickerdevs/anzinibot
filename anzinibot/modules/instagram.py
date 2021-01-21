@@ -91,6 +91,7 @@ def init_client():
         client = InstaClient(driver_path=f'{CHROMEDRIVER_DIR}', debug=True, logger=instalogger, localhost_headless=LOCALHEADLESS)
     else:
         client = InstaClient(host_type=InstaClient.WEB_SERVER, debug=True, logger=instalogger, localhost_headless=LOCALHEADLESS)
+    client.connect()
     return client
 
 
@@ -207,7 +208,10 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
         # Send DM to User
         update_message(session, inform_messages_status_text.format(len(session.get_scraped()), len(session.get_messaged())))
         try:
-            client.send_dm(follower, session.get_text())
+            if not session.post:
+                client.send_dm(follower, session.get_text())
+            else:
+                client.forward_post(session.post, follower, session.get_text())
             global lock
             with lock:
                 session.add_messaged(follower)
@@ -220,7 +224,7 @@ def dm_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[bool
                 action = randint(1, 3)
                 scrolls = randrange(1, 9)
                 interval = randrange(1, 4)
-                if action is 1:
+                if action == 1:
                     client.driver.get(ClientUrls.HOME_URL)
                     for scroll in range(scrolls):
                         client.scroll(interval=interval)
@@ -359,7 +363,7 @@ def tag_job(session:InteractSession, creds:dict, targets:List[str]) -> Tuple[boo
                 action = randint(1, 3)
                 scrolls = randrange(1, 3)
                 interval = randrange(1, 3)
-                if action is 1:
+                if action == 1:
                     client.driver.get(ClientUrls.HOME_URL)
                     for scroll in range(scrolls):
                         client.scroll(interval=interval)
@@ -391,8 +395,12 @@ def scrape_job(session:InteractSession) -> Tuple[bool, Optional[InteractSession]
 
     update_message(session, waiting_scrape_text)
     try:
-        followers = client.get_followers(session.target, session.count, deep_scrape=False)
-        session.set_scraped(followers)
+        followers, cursor = client.get_followers(session.target, session.count, deep_scrape=False)
+        scraped = list()
+        for user in followers:
+            if user not in scraped:
+                scraped.append(user.username)
+        session.set_scraped(scraped)
         session.save_scraped()
         client.disconnect()
         return (True, session)
