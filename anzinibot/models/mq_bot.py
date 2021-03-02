@@ -22,18 +22,6 @@ class MQBot(telegram.bot.Bot):
         OPTIONAL arguments'''
         return super(MQBot, self).send_message(*args, **kwargs)
 
-    @mq.queuedmessage
-    def edit_queued_message(self, *args, **kwargs):
-        '''Wrapped method would accept new `queued` and `isgroup`
-        OPTIONAL arguments'''
-        return super(MQBot, self).edit_message_text(*args, **kwargs)
-
-    @mq.queuedmessage
-    def edit_queued_markup(self, *args, **kwargs):
-        '''Wrapped method would accept new `queued` and `isgroup`
-        OPTIONAL arguments'''
-        return super(MQBot, self).edit_message_reply_markup(*args, **kwargs)
-
     def report_error(self, error=None, send_screenshot=False, screenshot_name=''):
         string = str(config.get('DEVS')).replace('[', '')
         string = string.replace(']', '')

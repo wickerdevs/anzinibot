@@ -83,7 +83,7 @@ def select_scrape_account(update, context):
     client = instagram.init_client()
     client.set_session_cookies(session.cookies)
     profile = None
-    count = 750
+    count = 10000
     try:
         send_message(update, context, "Getting profile info...")
         try:
@@ -109,6 +109,9 @@ def select_scrape_account(update, context):
         telelogger.debug(f"Error connectin to IG. Ignoring. Username: {username}")
     except:
         telelogger.debug(f"Error with request. Ignoring. Username: {username}")
+
+    session.set_target(username)
+    session.set_interaction(Interaction(username))
 
     markup = CreateMarkup({Callbacks.CANCEL: 'Cancel'}).create_markup()
     message = send_message(update, context, input_dm_post_url_text, markup)
